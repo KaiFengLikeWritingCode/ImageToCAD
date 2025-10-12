@@ -1,0 +1,19 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="Eslint" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="networkx.minimum_spanning_tree" />
+          <option value="networkx.adjacency_matrix" />
+          <option value="networkx.simple_cycles" />
+          <option value="networkx.from_numpy_matrix" />
+          <option value="networkx.all_node_cuts" />
+          <option value="networkx.all_min_edge_cuts" />
+          <option value="torch.utils.backcompat.broadcast_warning" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

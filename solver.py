@@ -402,56 +402,65 @@ def constraints(vars, geom_objects, constraint_list):
                     eqs.append(w * np.maximum(0.0, y_rel))
                 else:
                     raise ValueError("arc_side.side must be 'upper' or 'lower'")
-
-        elif type_ == 'line_side_of_tangent':
+        elif type_ == 'line_second_side':
             """
-            相对由起点+角度 θ 定义的“切线”，要求线段的第二个点在其上方/下方。
+            约束线段的第二个点 (x2,y2) 相对第一个点 (x1,y1) 的上下关系。
             用法：
-              {'type':'line_side_of_tangent','line':i,
-               'anchor':'start'/'end',   # 角线过哪个端点，通常用 'start'
-               'theta':.. 或 'theta_deg':..,
-               'side':'above'/'below',
-               'margin':0.0,'weight':1.0}
-            备注：
-              这是“侧”的约束，不强制线段方向等于 θ。
-              若同时要线段方向=θ，可叠加 'line_align_angle'。
+              {'type':'line_second_side','line':i,
+               'side':'above'/'below', 'margin':0.0, 'weight':1.0}
+            解释：
+              side='above' → y2 >= y1 (+ margin)
+              side='below' → y2 <= y1 (- margin)
+              margin：给一点安全间隙，避免正好贴边抖动
             """
             L = geom_objects[c['line']]
-            (xa, ya), (xb, yb) = L.points()
-            anchor = c.get('anchor', 'start')  # 'start' or 'end'
-            if anchor == 'start':
-                px, py = xa, ya
-                qx, qy = xb, yb  # 目标是“第二点” q
-            else:
-                px, py = xb, yb
-                qx, qy = xa, ya
-
-            if 'theta' in c:
-                th = float(c['theta'])
-            elif 'theta_deg' in c:
-                th = np.deg2rad(float(c['theta_deg']))
-            else:
-                raise ValueError("line_side_of_tangent needs theta or theta_deg")
+            (x1, y1), (x2, y2) = L.points()
 
             side = c.get('side', 'above')  # 'above' or 'below'
             margin = float(c.get('margin', 0.0))
             w = float(c.get('weight', 1.0))
 
-            # 向量 w = q - p
-            wx, wy = (qx - px), (qy - py)
-
-            # 在以 θ 为 x 轴的坐标系里，w 的垂直分量：
-            # v_perp = (-sinθ, cosθ)·w
-            v_perp = (-np.sin(th)) * wx + (np.cos(th)) * wy
+            dy = y2 - y1
 
             if side == 'above':
-                # v_perp >= margin
-                eqs.append(w * np.maximum(0.0, margin - v_perp))
+                # 需要 dy >= margin → 违反量 = margin - dy
+                eqs.append(w * np.maximum(0.0, margin - dy))
             elif side == 'below':
-                # v_perp <= -margin
-                eqs.append(w * np.maximum(0.0, v_perp + margin))
+                # 需要 dy <= -margin → 违反量 = dy + margin
+                eqs.append(w * np.maximum(0.0, dy + margin))
             else:
-                raise ValueError("line_side_of_tangent.side must be 'above' or 'below'")
+                raise ValueError("line_second_side.side must be 'above' or 'below'")
+        elif type_ == 'arc_end_x_side':
+            """
+            约束弧的**终点**相对**起点**在 x 方向的左右关系。
+            用法：
+              {'type':'arc_end_x_side','arc':k,
+               'side':'right'/'left', 'margin':0.0, 'weight':1.0}
+            定义：
+              - side='right' → x_end >= x_start + margin
+              - side='left'  → x_end <= x_start - margin
+            说明：
+              起点/终点按弧参数 (theta1 → start, theta2 → end) 的定义。
+              margin 可留出“严格”间隔，避免数值抖动正好卡在等号。
+            """
+            arc = geom_objects[c['arc']]
+            cx, cy, r, t1, t2 = arc.params
+            side = c.get('side', 'right')  # 'right' or 'left'
+            margin = float(c.get('margin', 0.0))
+            w = float(c.get('weight', 1.0))
+
+            # 起点与终点的 x 坐标
+            x_start = cx + r * np.cos(t1)
+            x_end = cx + r * np.cos(t2)
+
+            if side == 'right':
+                # 需要 x_end - x_start >= margin
+                eqs.append(w * np.maximum(0.0, margin - (x_end - x_start)))
+            elif side == 'left':
+                # 需要 x_end - x_start <= -margin
+                eqs.append(w * np.maximum(0.0, (x_end - x_start) + margin))
+            else:
+                raise ValueError("arc_end_x_side.side must be 'right' or 'left'")
 
     return eqs
 

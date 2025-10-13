@@ -252,6 +252,14 @@ constraint_list += [
     # b20.end 与 a8.start 相连 → 在 b20.end 处与 a8 相切
     {'type':'tangent_at_arc_end_to_line',   'line':8, 'arc':20},
 ]
+constraint_list += [
+    {'type':'line_second_side','line':3,'side':'below','margin':0.0,'weight':1.0},
+    {'type':'line_second_side','line':4,'side':'above','margin':0.0,'weight':1.0},
+    {'type':'line_second_side','line':5,'side':'above','margin':0.0,'weight':1.0},
+    {'type':'line_second_side','line':6,'side':'below','margin':0.0,'weight':1.0},
+]
+
+
 
 constraint_list.append({'type':'point_distance_y', 'p1':11, 'which1':1, 'p2':15, 'which2':0, 'value':25.0})
 
@@ -266,6 +274,31 @@ constraint_list += [
     {'type':'tangent_at_arc_to_arc','Aarc':16,'Barc':17,'a_end':True,'b_end':True,'same_direction':True},  # b16 ↔ b17
     {'type':'tangent_at_arc_to_arc','Aarc':17,'Barc':18,'a_end':False,'b_end':True,'same_direction':True},  # b17 ↔ b18
 ]
+
+constraint_list += [
+    {'type':'arc_side','arc':11,'side':'lower','samples':1,'weight':1.0},
+    {'type':'arc_side','arc':12,'side':'lower','samples':1,'weight':1.0},
+    {'type':'arc_side','arc':13,'side':'upper','samples':1,'weight':1.0},
+    {'type':'arc_side','arc':14,'side':'lower','samples':1,'weight':1.0},
+    {'type':'arc_side','arc':15,'side':'upper','samples':1,'weight':1.0},
+    {'type':'arc_side','arc':16,'side':'lower','samples':1,'weight':1.0},
+    {'type':'arc_side','arc':17,'side':'upper','samples':1,'weight':1.0},
+    {'type':'arc_side','arc':18,'side':'upper','samples':1,'weight':1.0},
+]
+
+constraint_list += [
+    {'type':'arc_end_x_side','arc':11,'side':'right','margin':0,'weight':1.0},
+    {'type':'arc_end_x_side','arc':12,'side':'right','margin':0,'weight':1.0},
+    {'type':'arc_end_x_side','arc':13,'side':'left','margin':0,'weight':1.0},
+    {'type':'arc_end_x_side','arc':14,'side':'right','margin':0,'weight':1.0},
+
+    {'type': 'arc_end_x_side', 'arc': 15, 'side': 'left', 'margin': 0, 'weight': 1.0},
+    {'type': 'arc_end_x_side', 'arc': 16, 'side': 'right', 'margin': 0, 'weight': 1.0},
+    {'type': 'arc_end_x_side', 'arc': 17, 'side': 'left', 'margin': 0, 'weight': 1.0},
+    {'type': 'arc_end_x_side', 'arc': 18, 'side': 'left', 'margin': 0, 'weight': 1.0},
+]
+
+
 
 # ---- 3) 尺寸（来自图上的关键尺寸；避免与已固定坐标冲突）----
 # 左上水平终点相对左竖顶的水平偏移 = 132
@@ -302,9 +335,6 @@ for arc_idx in [9,10,11,12,13,14,15,16,17,18,19,20]:
 # constraint_list.append({'type':'center_bound', 'arc':18, 'axis':'y', 'op':'between', 'lo':68.0, 'hi':178.0})
 # constraint_list.append({'type':'center_bound', 'arc':14, 'axis':'y', 'op':'between', 'lo':178.0, 'hi':68.0+135})
 #
-
-
-
 
 import numpy as np
 

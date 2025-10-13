@@ -106,7 +106,7 @@ geom_objects.append(l_bottom_hu1)
 l_bottom_hu2 = Arc(cx=None, cy=None, r=170.0, theta1=None, theta2=None)
 geom_objects.append(l_bottom_hu2)
 # 17 ：
-l_bottom_hu3 = Arc(cx=None, cy=None, r=716.0, theta1=None, theta2=None)
+l_bottom_hu3 = Arc(cx=None, cy=None, r=176.0, theta1=None, theta2=None)
 geom_objects.append(l_bottom_hu3)
 # 18：
 l_bottom_hu4 = Arc(cx=None, cy=None, r=40.0, theta1=None, theta2=None)

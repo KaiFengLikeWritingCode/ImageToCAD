@@ -2,7 +2,6 @@ import numpy as np
 from scipy.optimize import least_squares
 import matplotlib.pyplot as plt
 
-
 # -----------------------------
 # 定义几何对象
 # -----------------------------
@@ -11,42 +10,40 @@ class Line:
         # Store all parameters, None means unknown/optimizable
         self.params = np.array([x1, y1, x2, y2], dtype=float)
         self.fixed_mask = np.array([x1 is not None, y1 is not None, x2 is not None, y2 is not None])
-
+        
     def points(self):
         return self.params[:2], self.params[2:]
-
+    
     def get_optimizable_params(self):
         """Return only the parameters that need to be optimized"""
         return self.params[~self.fixed_mask]
-
+    
     def set_optimizable_params(self, values):
         """Set the optimizable parameters with solved values"""
         self.params[~self.fixed_mask] = values
-
 
 class Arc:
     def __init__(self, cx=None, cy=None, r=None, theta1=None, theta2=None):
         # Store all parameters, None means unknown/optimizable
         self.params = np.array([cx, cy, r, theta1, theta2], dtype=float)
-        self.fixed_mask = np.array([cx is not None, cy is not None, r is not None,
-                                    theta1 is not None, theta2 is not None])
-
+        self.fixed_mask = np.array([cx is not None, cy is not None, r is not None, 
+                                   theta1 is not None, theta2 is not None])
+    
     def points(self):
         cx, cy, r, t1, t2 = self.params
-        x1 = cx + r * np.cos(t1)
-        y1 = cy + r * np.sin(t1)
-        x2 = cx + r * np.cos(t2)
-        y2 = cy + r * np.sin(t2)
-        return (x1, y1), (x2, y2)
-
+        x1 = cx + r*np.cos(t1)
+        y1 = cy + r*np.sin(t1)
+        x2 = cx + r*np.cos(t2)
+        y2 = cy + r*np.sin(t2)
+        return (x1,y1), (x2,y2)
+    
     def get_optimizable_params(self):
         """Return only the parameters that need to be optimized"""
         return self.params[~self.fixed_mask]
-
+    
     def set_optimizable_params(self, values):
         """Set the optimizable parameters with solved values"""
         self.params[~self.fixed_mask] = values
-
 
 # -----------------------------
 # 构建方程
@@ -321,139 +318,11 @@ def constraints(vars, geom_objects, constraint_list):
             tx, ty = -np.sin(t), np.cos(t)
             eqs.append(lx * ty - ly * tx)
 
-        # ---------- 圆心单轴范围约束（软不等式） ----------
-        # 用法一：{'type':'center_bound','arc':k, 'axis':'x'/'y', 'op':'ge'/'le', 'value':..., 'margin':0.0, 'weight':1.0}
-        # 用法二：{'type':'center_bound','arc':k, 'axis':'x'/'y', 'op':'between', 'lo':..., 'hi':..., 'margin':0.0, 'weight':1.0}
-        elif type_ == 'center_bound':
-            arc    = geom_objects[c['arc']]
-            axis   = c.get('axis', 'x')          # 'x' or 'y'
-            op     = c.get('op', 'ge')           # 'ge'/'le'/'between'
-            margin = float(c.get('margin', 0.0)) # 允许的软缓冲，默认0
-            w      = float(c.get('weight', 1.0)) # 权重，默认1
-
-            coord = arc.params[0] if axis == 'x' else arc.params[1]
-
-            if op == 'ge':
-                # coord >= value  ->  违反量 = value - coord - margin
-                viol = (float(c['value']) - coord) - margin
-                eqs.append(w * np.maximum(0.0, viol))
-
-            elif op == 'le':
-                # coord <= value  ->  违反量 = coord - value - margin
-                viol = (coord - float(c['value'])) - margin
-                eqs.append(w * np.maximum(0.0, viol))
-
-            elif op == 'between':
-                lo = float(c['lo']); hi = float(c['hi'])
-                # 低于下界 or 高于上界 才惩罚
-                viol_lo = (lo - coord) - margin
-                viol_hi = (coord - hi) - margin
-                eqs.append(w * np.maximum(0.0, viol_lo))
-                eqs.append(w * np.maximum(0.0, viol_hi))
-
-            else:
-                raise ValueError("center_bound.op must be 'ge', 'le', or 'between'")
-
-        # ---------- 圆心矩形盒范围约束（一次性给 x/y 上下界） ----------
-        # 用法：{'type':'center_in_box','arc':k, 'xmin':..,'xmax':..,'ymin':..,'ymax':.., 'margin':0.0, 'weight':1.0}
-        elif type_ == 'center_in_box':
-            arc    = geom_objects[c['arc']]
-            cx, cy = arc.params[0], arc.params[1]
-            xmin   = c.get('xmin', -np.inf); xmax = c.get('xmax',  np.inf)
-            ymin   = c.get('ymin', -np.inf); ymax = c.get('ymax',  np.inf)
-            margin = float(c.get('margin', 0.0))
-            w      = float(c.get('weight', 1.0))
-
-            if np.isfinite(xmin): eqs.append(w * np.maximum(0.0, (xmin - cx) - margin))
-            if np.isfinite(xmax): eqs.append(w * np.maximum(0.0, (cx   - xmax) - margin))
-            if np.isfinite(ymin): eqs.append(w * np.maximum(0.0, (ymin - cy) - margin))
-            if np.isfinite(ymax): eqs.append(w * np.maximum(0.0, (cy   - ymax) - margin))
-
-        elif type_ == 'arc_side':
-            """
-            控制弧相对圆心“上半弧/下半弧”（默认按 y 轴判定）。
-            用法：
-              {'type':'arc_side','arc':k, 'side':'upper'/'lower',
-               'samples':1 或 3, 'weight':1.0}
-            解释：
-              - side='upper' → 采样点的 (y - cy) >= 0
-              - side='lower' → 采样点的 (y - cy) <= 0
-              - samples: 取 1 表示用中点角；取 3 表示用 t1, mid, t2 三点都约束（更稳）
-            """
-            arc = geom_objects[c['arc']]
-            cx, cy, r, t1, t2 = arc.params
-            side = c.get('side', 'upper')  # 'upper' or 'lower'
-            w = float(c.get('weight', 1.0))
-            samples = int(c.get('samples', 1))
-
-            # 采样角
-            if samples <= 1:
-                ts = [0.5 * (t1 + t2)]
-            else:
-                ts = [t1, 0.5 * (t1 + t2), t2]
-
-            for t in ts:
-                y_rel = cy + r * np.sin(t) - cy  # = r*sin(t)
-                if side == 'upper':
-                    # 需要 y_rel >= 0 → 违反量为 -y_rel
-                    eqs.append(w * np.maximum(0.0, -y_rel))
-                elif side == 'lower':
-                    # 需要 y_rel <= 0 → 违反量为 +y_rel
-                    eqs.append(w * np.maximum(0.0, y_rel))
-                else:
-                    raise ValueError("arc_side.side must be 'upper' or 'lower'")
-
-        elif type_ == 'line_side_of_tangent':
-            """
-            相对由起点+角度 θ 定义的“切线”，要求线段的第二个点在其上方/下方。
-            用法：
-              {'type':'line_side_of_tangent','line':i,
-               'anchor':'start'/'end',   # 角线过哪个端点，通常用 'start'
-               'theta':.. 或 'theta_deg':..,
-               'side':'above'/'below',
-               'margin':0.0,'weight':1.0}
-            备注：
-              这是“侧”的约束，不强制线段方向等于 θ。
-              若同时要线段方向=θ，可叠加 'line_align_angle'。
-            """
-            L = geom_objects[c['line']]
-            (xa, ya), (xb, yb) = L.points()
-            anchor = c.get('anchor', 'start')  # 'start' or 'end'
-            if anchor == 'start':
-                px, py = xa, ya
-                qx, qy = xb, yb  # 目标是“第二点” q
-            else:
-                px, py = xb, yb
-                qx, qy = xa, ya
-
-            if 'theta' in c:
-                th = float(c['theta'])
-            elif 'theta_deg' in c:
-                th = np.deg2rad(float(c['theta_deg']))
-            else:
-                raise ValueError("line_side_of_tangent needs theta or theta_deg")
-
-            side = c.get('side', 'above')  # 'above' or 'below'
-            margin = float(c.get('margin', 0.0))
-            w = float(c.get('weight', 1.0))
-
-            # 向量 w = q - p
-            wx, wy = (qx - px), (qy - py)
-
-            # 在以 θ 为 x 轴的坐标系里，w 的垂直分量：
-            # v_perp = (-sinθ, cosθ)·w
-            v_perp = (-np.sin(th)) * wx + (np.cos(th)) * wy
-
-            if side == 'above':
-                # v_perp >= margin
-                eqs.append(w * np.maximum(0.0, margin - v_perp))
-            elif side == 'below':
-                # v_perp <= -margin
-                eqs.append(w * np.maximum(0.0, v_perp + margin))
-            else:
-                raise ValueError("line_side_of_tangent.side must be 'above' or 'below'")
-
     return eqs
+
+
+
+
 
 
 def get_initial_params(geom_objects):
@@ -469,7 +338,7 @@ def get_initial_params(geom_objects):
             if type_name == 'Line':
                 defaults = [0.0, 0.0, 1.0, 0.0]  # x1, y1, x2, y2
             elif type_name == 'Arc':
-                defaults = [0.0, 0.0, 1.0, 0.0, np.pi / 2]  # cx, cy, r, theta1, theta2
+                defaults = [0.0, 0.0, 1.0, 0.0, np.pi/2]  # cx, cy, r, theta1, theta2
             else:
                 print(type(obj))
                 raise ValueError("Invalid object type")
@@ -483,15 +352,16 @@ def get_initial_params(geom_objects):
     return np.array(params)
 
 
+
 def solve_geometry(geom_objects, constraint_list, verbose=True):
     """
     Solve geometry with partial parameters
-
+    
     Args:
         geom_objects: List of Line and Arc objects with partial parameters
         constraint_list: List of constraint dictionaries
         verbose: Whether to print solving progress
-
+    
     Returns:
         Result object from scipy.optimize.least_squares
     """
@@ -499,15 +369,15 @@ def solve_geometry(geom_objects, constraint_list, verbose=True):
         print("Initial parameters:")
         for i, obj in enumerate(geom_objects):
             print(f"  Object {i}: {obj.params} (fixed: {obj.fixed_mask})")
-
+    
     # Get initial parameters for optimization
     x0 = get_initial_params(geom_objects)
     if verbose:
         print(f"Initial optimization params: {x0}")
-
+    
     # Solve
     res = least_squares(constraints, x0, args=(geom_objects, constraint_list))
-
+    
     if verbose:
         print(f"Solver result: {res.success}")
         if res.success:
@@ -516,17 +386,16 @@ def solve_geometry(geom_objects, constraint_list, verbose=True):
                 print(f"  Object {i}: {obj.params}")
         else:
             print("Solver failed!")
-
+    
     return res
-
 
 # Helper函数：给出来一系列的几何对象（直线和圆弧），自动生成一系列的前后相连，最后一个对象的终点连回第一个的起点的约束
 def generate_coincident_constraint_list(geom_objects):
     constraint_list = []
     for i in range(len(geom_objects)):
-        constraint_list.append(
-            {'type': 'coincident', 'p1': i, 'which1': 1, 'p2': (i + 1) % len(geom_objects), 'which2': 0})
+        constraint_list.append({'type':'coincident','p1':i,'which1':1,'p2':(i+1)%len(geom_objects),'which2':0})
     return constraint_list
+
 
 
 if __name__ == "__main__":
@@ -534,7 +403,6 @@ if __name__ == "__main__":
     print("Example 1: 车轮生成示例")
     # extract the objects and constrainst from wheel.py
     from wheelobject import geom_objects, constraint_list
-
     print("Geom objects:")
     for obj in geom_objects:
         print(obj.params)
@@ -547,38 +415,38 @@ if __name__ == "__main__":
     # -----------------------------
     res = solve_geometry(geom_objects, constraint_list)
 
-    print("\n" + "=" * 50 + "\n")
+    print("\n" + "="*50 + "\n")
 
     # -----------------------------
     # 可视化
     # -----------------------------
     plt.figure(figsize=(15, 10))
     plt.title("Wheel Profile - CAD Constraint Solution")
-
+    
     # Plot the wheel profile
     for obj in geom_objects:
         if type(obj).__name__ == 'Line':
-            (x1, y1), (x2, y2) = obj.points()
-            plt.plot([x1, x2], [y1, y2], 'b-', linewidth=2)
+            (x1,y1),(x2,y2) = obj.points()
+            plt.plot([x1,x2],[y1,y2],'b-', linewidth=2)
         elif type(obj).__name__ == 'Arc':
-            cx, cy, r, t1, t2 = obj.params
-            ts = np.linspace(t1, t2, 50)
-            xs = cx + r * np.cos(ts)
-            ys = cy + r * np.sin(ts)
-            plt.plot(xs, ys, 'r-', linewidth=2)
+            cx,cy,r,t1,t2 = obj.params
+            ts = np.linspace(t1,t2,50)
+            xs = cx + r*np.cos(ts)
+            ys = cy + r*np.sin(ts)
+            plt.plot(xs,ys,'r-', linewidth=2)
             # Mark center points for arcs
             plt.plot(cx, cy, 'ro', markersize=3, alpha=0.7)
-
+    
     plt.axis('equal')
     plt.grid(True, alpha=0.3)
     plt.xlabel('X (mm)')
     plt.ylabel('Y (mm)')
     plt.title('Wheel Profile - Solved Geometry')
-
+    
     # Add some annotations for key dimensions
-    plt.text(0.02, 0.98, f'Total Width: 420mm\nHeight: 178mm',
+    plt.text(0.02, 0.98, f'Total Width: 420mm\nHeight: 178mm', 
              transform=plt.gca().transAxes, verticalalignment='top',
              bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
-
+    
     plt.tight_layout()
     plt.show()

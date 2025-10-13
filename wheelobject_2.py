@@ -150,23 +150,23 @@ geom_objects.append(L_right_vert)
 constraint_list += [
     {'type':'coincident','p1':0,'which1':1,'p2':1,'which2':0},   # a0.top == a1.start
     {'type':'coincident','p1':0,'which1':0,'p2':2,'which2':0},
-    {'type':'coincident','p1':1,'which1':1,'p2':9,'which2':1},   # a1.end == b9.start
-    {'type':'coincident','p1':9,'which1':0,'p2':3,'which2':0},   # b9.end == a3.start
+    {'type':'coincident','p1':1,'which1':1,'p2':9,'which2':0},   # a1.end == b9.start
+    {'type':'coincident','p1':9,'which1':1,'p2':3,'which2':0},   # b9.end == a3.start
     {'type':'coincident','p1':3,'which1':1,'p2':11,'which2':0},  # a3.end == b11.start (上链第一弧)
 ]
 
 # 上链：b11 → b12 → b13 → b14
 constraint_list += [
     {'type':'coincident','p1':11,'which1':1,'p2':12,'which2':0},
-    {'type':'coincident','p1':12,'which1':1,'p2':13,'which2':1},
-    {'type':'coincident','p1':13,'which1':0,'p2':14,'which2':0},
+    {'type':'coincident','p1':12,'which1':1,'p2':13,'which2':0},
+    {'type':'coincident','p1':13,'which1':1,'p2':14,'which2':0},
 ]
 
 # 上链末 → 右上斜线 → 右上 R3 → 右上水平 → 右侧基准竖线 top
 constraint_list += [
     {'type':'coincident','p1':14,'which1':1,'p2':5,'which2':0},   # b14.end == a5.start
-    {'type':'coincident','p1':5, 'which1':1,'p2':19,'which2':1},  # a5.end  == b19.start
-    {'type':'coincident','p1':19,'which1':0,'p2':7,'which2':0},   # b19.end == a7.start
+    {'type':'coincident','p1':5, 'which1':1,'p2':19,'which2':0},  # a5.end  == b19.start
+    {'type':'coincident','p1':19,'which1':1,'p2':7,'which2':0},   # b19.end == a7.start
     {'type':'coincident','p1':7, 'which1':1,'p2':21,'which2':1},  # a7.end  == a21.top
 ]
 
@@ -175,19 +175,19 @@ constraint_list += [
     {'type':'coincident','p1':0,'which1':0,'p2':2,'which2':0},    # a0.bottom == a2.start
     {'type':'coincident','p1':2,'which1':1,'p2':10,'which2':0},   # a2.end   == b10.start
     {'type':'coincident','p1':10,'which1':1,'p2':4,'which2':0},   # b10.end  == a4.start
-    {'type':'coincident','p1':4,'which1':1,'p2':15,'which2':1},   # a4.end   == b15.start (下链第一弧)
+    {'type':'coincident','p1':4,'which1':1,'p2':15,'which2':0},   # a4.end   == b15.start (下链第一弧)
 ]
 
 # 下链：b15 → b16 → b17 → b18
 constraint_list += [
-    {'type':'coincident','p1':15,'which1':0,'p2':16,'which2':0},
-    {'type':'coincident','p1':16,'which1':1,'p2':17,'which2':1},
-    {'type':'coincident','p1':17,'which1':0,'p2':18,'which2':1},
+    {'type':'coincident','p1':15,'which1':1,'p2':16,'which2':0},
+    {'type':'coincident','p1':16,'which1':1,'p2':17,'which2':0},
+    {'type':'coincident','p1':17,'which1':1,'p2':18,'which2':0},
 ]
 
 # 下链末 → 右下斜线 → 右下 R3 → 右下水平 → 右侧基准竖线 bottom
 constraint_list += [
-    {'type':'coincident','p1':18,'which1':0,'p2':6, 'which2':0},  # b18.end == a6.start
+    {'type':'coincident','p1':18,'which1':1,'p2':6, 'which2':0},  # b18.end == a6.start
     {'type':'coincident','p1':6, 'which1':1,'p2':20,'which2':0},  # a6.end  == b20.start
     {'type':'coincident','p1':20,'which1':1,'p2':8, 'which2':0},  # b20.end == a8.start
     {'type':'coincident','p1':8, 'which1':1,'p2':21,'which2':0},  # a8.end  == a21.bottom
@@ -195,81 +195,35 @@ constraint_list += [
 
 # ---- 2) 相切（G1）----
 # 线 ↔ 弧：两侧小圆角与相邻直线相切
-# constraint_list += [
-#     {'type':'tangent_line_arc','line':1, 'arc':9},   # a1 ↔ b9
-#     {'type':'tangent_line_arc','line':3, 'arc':9},   # a3 ↔ b9
-#     {'type':'tangent_line_arc','line':3, 'arc':11},   # a3 ↔ b11
-#     {'type':'tangent_line_arc','line':2, 'arc':10},  # a2 ↔ b10
-#     {'type':'tangent_line_arc','line':4, 'arc':10},  # a4 ↔ b10
-#     {'type':'tangent_line_arc','line':4, 'arc':15},  # a4 ↔ b15
-#     {'type':'tangent_line_arc','line':5, 'arc':14},  # a5 ↔ b14
-#     {'type':'tangent_line_arc','line':5, 'arc':19},  # a5 ↔ b19
-#     {'type':'tangent_line_arc','line':6, 'arc':18},  # a6 ↔ b18
-#     {'type':'tangent_line_arc','line':6, 'arc':20},  # a6 ↔ b20
-#     {'type':'tangent_line_arc','line':7, 'arc':19},  # a7 ↔ b19
-#     {'type':'tangent_line_arc','line':8, 'arc':20},  # a8 ↔ b20
-# ]
-
-'''
-tangent_at_arc_start_to_line：用弧的 起点（theta1）的切向；
-tangent_at_arc_end_to_line：用弧的 终点（theta2）的切向；
-'''
-# ---- 2) 相切（G1）---- 端点处相切
 constraint_list += [
-    # 左上：a1.end 与 b9.start 相连 → 在 b9.start 处与 a1 相切
-    {'type':'tangent_at_arc_end_to_line', 'line':1, 'arc':9},
-
-    # b9.end 与 a3.start 相连 → 在 b9.end 处与 a3 相切
-    {'type':'tangent_at_arc_start_to_line',   'line':3, 'arc':9},
-
-    # a3.end 与 b11.start 相连 → 在 b11.start 处与 a3 相切
-    {'type':'tangent_at_arc_start_to_line', 'line':3, 'arc':11},
-
-    # a2.end 与 b10.start 相连 → 在 b10.start 处与 a2 相切
-    {'type':'tangent_at_arc_start_to_line', 'line':2, 'arc':10},
-
-    # b10.end 与 a4.start 相连 → 在 b10.end 处与 a4 相切
-    {'type':'tangent_at_arc_end_to_line', 'line':4, 'arc':10},
-
-    # a4.end 与 b15.start 相连 → 在 b15.start 处与 a4 相切
-    {'type':'tangent_at_arc_end_to_line', 'line':4, 'arc':15},
-
-    # b14.end 与 a5.start 相连 → 在 b14.end 处与 a5 相切
-    {'type':'tangent_at_arc_end_to_line',   'line':5, 'arc':14},
-
-    # a5.end 与 b19.start 相连 → 在 b19.start 处与 a5 相切
-    {'type':'tangent_at_arc_end_to_line', 'line':5, 'arc':19},
-
-    # b18.end 与 a6.start 相连 → 在 b18.end 处与 a6 相切
-    {'type':'tangent_at_arc_start_to_line',   'line':6, 'arc':18},
-
-    # a6.end 与 b20.start 相连 → 在 b20.start 处与 a6 相切
-    {'type':'tangent_at_arc_start_to_line', 'line':6, 'arc':20},
-
-    # b19.end 与 a7.start 相连 → 在 b19.end 处与 a7 相切
-    {'type':'tangent_at_arc_start_to_line',   'line':7, 'arc':19},
-
-    # b20.end 与 a8.start 相连 → 在 b20.end 处与 a8 相切
-    {'type':'tangent_at_arc_end_to_line',   'line':8, 'arc':20},
+    {'type':'tangent_line_arc','line':1, 'arc':9},   # a1 ↔ b9
+    {'type':'tangent_line_arc','line':3, 'arc':9},   # a3 ↔ b9
+    {'type':'tangent_line_arc','line':3, 'arc':11},   # a3 ↔ b11
+    {'type':'tangent_line_arc','line':2, 'arc':10},  # a2 ↔ b10
+    {'type':'tangent_line_arc','line':4, 'arc':10},  # a4 ↔ b10
+    {'type':'tangent_line_arc','line':4, 'arc':15},  # a4 ↔ b15
+    {'type':'tangent_line_arc','line':5, 'arc':14},  # a5 ↔ b14
+    {'type':'tangent_line_arc','line':5, 'arc':19},  # a5 ↔ b19
+    {'type':'tangent_line_arc','line':6, 'arc':18},  # a6 ↔ b18
+    {'type':'tangent_line_arc','line':6, 'arc':20},  # a6 ↔ b20
+    {'type':'tangent_line_arc','line':7, 'arc':19},  # a7 ↔ b19
+    {'type':'tangent_line_arc','line':8, 'arc':20},  # a8 ↔ b20
 ]
-
-constraint_list.append({'type':'point_distance_y', 'p1':11, 'which1':1, 'p2':15, 'which2':0, 'value':25.0})
-
 
 # 弧 ↔ 弧：中央蛇形上/下两条链，逐段相切
 constraint_list += [
-    {'type':'tangent_at_arc_to_arc','Aarc':11,'Barc':12,'a_end':True,'b_end':False,'same_direction':True},  # b11 ↔ b12
-    {'type':'tangent_at_arc_to_arc','Aarc':12,'Barc':13,'a_end':True,'b_end':True,'same_direction':True},  # b12 ↔ b13
-    {'type':'tangent_at_arc_to_arc','Aarc':13,'Barc':14,'a_end':False,'b_end':False,'same_direction':True},  # b13 ↔ b14
+    {'type':'tangent_arc_arc','Aarc':11,'Barc':12,'a_end':True,'b_end':False},  # b11 ↔ b12
+    {'type':'tangent_arc_arc','Aarc':12,'Barc':13,'a_end':True,'b_end':False},  # b12 ↔ b13
+    {'type':'tangent_arc_arc','Aarc':13,'Barc':14,'a_end':True,'b_end':False},  # b13 ↔ b14
 
-    {'type':'tangent_at_arc_to_arc','Aarc':15,'Barc':16,'a_end':False,'b_end':False,'same_direction':True},  # b15 ↔ b16
-    {'type':'tangent_at_arc_to_arc','Aarc':16,'Barc':17,'a_end':True,'b_end':True,'same_direction':True},  # b16 ↔ b17
-    {'type':'tangent_at_arc_to_arc','Aarc':17,'Barc':18,'a_end':False,'b_end':True,'same_direction':True},  # b17 ↔ b18
+    {'type':'tangent_arc_arc','Aarc':15,'Barc':16,'a_end':True,'b_end':False},  # b15 ↔ b16
+    {'type':'tangent_arc_arc','Aarc':16,'Barc':17,'a_end':True,'b_end':False},  # b16 ↔ b17
+    {'type':'tangent_arc_arc','Aarc':17,'Barc':18,'a_end':True,'b_end':False},  # b17 ↔ b18
 ]
 
 # ---- 3) 尺寸（来自图上的关键尺寸；避免与已固定坐标冲突）----
 # 左上水平终点相对左竖顶的水平偏移 = 132
-constraint_list.append({'type':'point_distance_x','p1':0,'which1':1,'p2':1,'which2':1,'value':132.0})
+# constraint_list.append({'type':'point_distance_x','p1':0,'which1':1,'p2':1,'which2':1,'value':132.0})
 
 # 右下水平短边长度 = 24
 constraint_list.append({'type':'length','line':8,'value':24.0})
@@ -286,24 +240,6 @@ for arc_idx, R in [
     (19,3.0),(20,3.0),           # 右上/右下小圆角
 ]:
     constraint_list.append({'type':'radius','arc':arc_idx,'value':R})
-
-# 每个圆弧的扫角不超过 360°
-for arc_idx in [9,10,11,12,13,14,15,16,17,18,19,20]:
-    constraint_list.append({'type': 'arc_sweep_leq', 'arc': arc_idx, 'max_deg': 180.0})
-
-
-
-# constraint_list.append({'type':'center_bound', 'arc':12, 'axis':'y', 'op':'ge', 'value':178.0, 'margin':2.0, 'weight':2.0})
-# constraint_list.append({'type':'center_bound', 'arc':16, 'axis':'y', 'op':'ge', 'value':178.0, 'margin':2.0, 'weight':2.0})
-# # constraint_list.append({'type':'center_bound', 'arc':14, 'axis':'y', 'op':'ge', 'value':178.0, 'margin':2.0, 'weight':2.0})
-#
-# # b11 圆心 x 落在 [200, 340] 之间
-# constraint_list.append({'type':'center_bound', 'arc':11, 'axis':'y', 'op':'between', 'lo':79.0, 'hi':178.0})
-# constraint_list.append({'type':'center_bound', 'arc':18, 'axis':'y', 'op':'between', 'lo':68.0, 'hi':178.0})
-# constraint_list.append({'type':'center_bound', 'arc':14, 'axis':'y', 'op':'between', 'lo':178.0, 'hi':68.0+135})
-#
-
-
 
 
 import numpy as np
@@ -339,5 +275,3 @@ for idx, t1, t2 in [(15, -20,  10), (16, 10,  40), (17, 40,  80), (18, 80, 100)]
 
 # ========== 可选：R170 圆心到基线的垂距 68 ==========
 # constraint_list.append({'type':'center_distance_y','arc':16,'baseline_y':0.0,'value':68.0})
-
-

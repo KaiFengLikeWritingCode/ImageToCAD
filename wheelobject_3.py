@@ -229,7 +229,7 @@ constraint_list += [
     {'type':'tangent_at_arc_start_to_line', 'line':2, 'arc':10},
 
     # b10.end 与 a4.start 相连 → 在 b10.end 处与 a4 相切
-    {'type':'tangent_at_arc_end_to_line', 'line':4, 'arc':10},
+    {'type':'tangent_at_arc_end_to_line',   'line':4, 'arc':10},
 
     # a4.end 与 b15.start 相连 → 在 b15.start 处与 a4 相切
     {'type':'tangent_at_arc_end_to_line', 'line':4, 'arc':15},
@@ -258,13 +258,13 @@ constraint_list.append({'type':'point_distance_y', 'p1':11, 'which1':1, 'p2':15,
 
 # 弧 ↔ 弧：中央蛇形上/下两条链，逐段相切
 constraint_list += [
-    {'type':'tangent_at_arc_to_arc','Aarc':11,'Barc':12,'a_end':True,'b_end':False,'same_direction':True},  # b11 ↔ b12
-    {'type':'tangent_at_arc_to_arc','Aarc':12,'Barc':13,'a_end':True,'b_end':True,'same_direction':True},  # b12 ↔ b13
-    {'type':'tangent_at_arc_to_arc','Aarc':13,'Barc':14,'a_end':False,'b_end':False,'same_direction':True},  # b13 ↔ b14
+    {'type':'tangent_at_arc_to_arc','Aarc':11,'Barc':12,'a_end':True,'b_end':False,'same_direction':False},  # b11 ↔ b12
+    {'type':'tangent_at_arc_to_arc','Aarc':12,'Barc':13,'a_end':True,'b_end':True,'same_direction':False},  # b12 ↔ b13
+    {'type':'tangent_at_arc_to_arc','Aarc':13,'Barc':14,'a_end':False,'b_end':False,'same_direction':False},  # b13 ↔ b14
 
-    {'type':'tangent_at_arc_to_arc','Aarc':15,'Barc':16,'a_end':False,'b_end':False,'same_direction':True},  # b15 ↔ b16
-    {'type':'tangent_at_arc_to_arc','Aarc':16,'Barc':17,'a_end':True,'b_end':True,'same_direction':True},  # b16 ↔ b17
-    {'type':'tangent_at_arc_to_arc','Aarc':17,'Barc':18,'a_end':False,'b_end':True,'same_direction':True},  # b17 ↔ b18
+    {'type':'tangent_at_arc_to_arc','Aarc':15,'Barc':16,'a_end':False,'b_end':False,'same_direction':False},  # b15 ↔ b16
+    {'type':'tangent_at_arc_to_arc','Aarc':16,'Barc':17,'a_end':True,'b_end':True,'same_direction':False},  # b16 ↔ b17
+    {'type':'tangent_at_arc_to_arc','Aarc':17,'Barc':18,'a_end':False,'b_end':True,'same_direction':False},  # b17 ↔ b18
 ]
 
 # ---- 3) 尺寸（来自图上的关键尺寸；避免与已固定坐标冲突）----
@@ -286,24 +286,6 @@ for arc_idx, R in [
     (19,3.0),(20,3.0),           # 右上/右下小圆角
 ]:
     constraint_list.append({'type':'radius','arc':arc_idx,'value':R})
-
-# 每个圆弧的扫角不超过 360°
-for arc_idx in [9,10,11,12,13,14,15,16,17,18,19,20]:
-    constraint_list.append({'type': 'arc_sweep_leq', 'arc': arc_idx, 'max_deg': 180.0})
-
-
-
-# constraint_list.append({'type':'center_bound', 'arc':12, 'axis':'y', 'op':'ge', 'value':178.0, 'margin':2.0, 'weight':2.0})
-# constraint_list.append({'type':'center_bound', 'arc':16, 'axis':'y', 'op':'ge', 'value':178.0, 'margin':2.0, 'weight':2.0})
-# # constraint_list.append({'type':'center_bound', 'arc':14, 'axis':'y', 'op':'ge', 'value':178.0, 'margin':2.0, 'weight':2.0})
-#
-# # b11 圆心 x 落在 [200, 340] 之间
-# constraint_list.append({'type':'center_bound', 'arc':11, 'axis':'y', 'op':'between', 'lo':79.0, 'hi':178.0})
-# constraint_list.append({'type':'center_bound', 'arc':18, 'axis':'y', 'op':'between', 'lo':68.0, 'hi':178.0})
-# constraint_list.append({'type':'center_bound', 'arc':14, 'axis':'y', 'op':'between', 'lo':178.0, 'hi':68.0+135})
-#
-
-
 
 
 import numpy as np
@@ -339,5 +321,3 @@ for idx, t1, t2 in [(15, -20,  10), (16, 10,  40), (17, 40,  80), (18, 80, 100)]
 
 # ========== 可选：R170 圆心到基线的垂距 68 ==========
 # constraint_list.append({'type':'center_distance_y','arc':16,'baseline_y':0.0,'value':68.0})
-
-

@@ -215,50 +215,9 @@ tangent_at_arc_start_to_line：用弧的 起点（theta1）的切向；
 tangent_at_arc_end_to_line：用弧的 终点（theta2）的切向；
 '''
 # ---- 2) 相切（G1）---- 端点处相切
-# constraint_list += [
-#     # 左上：a1.end 与 b9.start 相连 → 在 b9.start 处与 a1 相切
-#     {'type':'tangent_at_arc_end_to_line', 'line':1, 'arc':9},
-#
-#     # b9.end 与 a3.start 相连 → 在 b9.end 处与 a3 相切
-#     {'type':'tangent_at_arc_start_to_line',   'line':3, 'arc':9},
-#
-#     # a3.end 与 b11.start 相连 → 在 b11.start 处与 a3 相切
-#     {'type':'tangent_at_arc_start_to_line', 'line':3, 'arc':11},
-#
-#     # a2.end 与 b10.start 相连 → 在 b10.start 处与 a2 相切
-#     {'type':'tangent_at_arc_start_to_line', 'line':2, 'arc':10},
-#
-#     # b10.end 与 a4.start 相连 → 在 b10.end 处与 a4 相切
-#     {'type':'tangent_at_arc_end_to_line', 'line':4, 'arc':10},
-#
-#     # a4.end 与 b15.start 相连 → 在 b15.start 处与 a4 相切
-#     {'type':'tangent_at_arc_end_to_line', 'line':4, 'arc':15},
-#
-#     # b14.end 与 a5.start 相连 → 在 b14.end 处与 a5 相切
-#     {'type':'tangent_at_arc_end_to_line',   'line':5, 'arc':14},
-#
-#     # a5.end 与 b19.start 相连 → 在 b19.start 处与 a5 相切
-#     {'type':'tangent_at_arc_end_to_line', 'line':5, 'arc':19},
-#
-#     # b18.end 与 a6.start 相连 → 在 b18.end 处与 a6 相切
-#     {'type':'tangent_at_arc_start_to_line',   'line':6, 'arc':18},
-#
-#     # a6.end 与 b20.start 相连 → 在 b20.start 处与 a6 相切
-#     {'type':'tangent_at_arc_start_to_line', 'line':6, 'arc':20},
-#
-#     # b19.end 与 a7.start 相连 → 在 b19.end 处与 a7 相切
-#     {'type':'tangent_at_arc_start_to_line',   'line':7, 'arc':19},
-#
-#     # b20.end 与 a8.start 相连 → 在 b20.end 处与 a8 相切
-#     {'type':'tangent_at_arc_end_to_line',   'line':8, 'arc':20},
-# ]
-
-# 圆弧除交点外，整段都在给定直线的‘左侧’或‘右侧’
-# ---- 2) 相切（G1）---- 端点处相切
 constraint_list += [
     # 左上：a1.end 与 b9.start 相连 → 在 b9.start 处与 a1 相切
     {'type':'tangent_at_arc_end_to_line', 'line':1, 'arc':9},
-
 
     # b9.end 与 a3.start 相连 → 在 b9.end 处与 a3 相切
     {'type':'tangent_at_arc_start_to_line',   'line':3, 'arc':9},
@@ -293,9 +252,6 @@ constraint_list += [
     # b20.end 与 a8.start 相连 → 在 b20.end 处与 a8 相切
     {'type':'tangent_at_arc_end_to_line',   'line':8, 'arc':20},
 ]
-
-
-
 constraint_list += [
     {'type':'line_second_side','line':3,'side':'below','margin':0.0,'weight':1.0},
     {'type':'line_second_side','line':4,'side':'above','margin':0.0,'weight':1.0},
@@ -303,18 +259,55 @@ constraint_list += [
     {'type':'line_second_side','line':6,'side':'below','margin':0.0,'weight':1.0},
 ]
 
+
+
 constraint_list.append({'type':'point_distance_y', 'p1':11, 'which1':1, 'p2':15, 'which2':0, 'value':25.0})
 
 
 # 弧 ↔ 弧：中央蛇形上/下两条链，逐段相切
 constraint_list += [
     {'type':'tangent_at_arc_to_arc','Aarc':11,'Barc':12,'a_end':True,'b_end':False,'same_direction':True},  # b11 ↔ b12
-    {'type':'tangent_at_arc_to_arc','Aarc':12,'Barc':13,'a_end':True,'b_end':True,'same_direction':False},  # b12 ↔ b13
-    {'type':'tangent_at_arc_to_arc','Aarc':13,'Barc':14,'a_end':False,'b_end':False,'same_direction':False},  # b13 ↔ b14
+    {'type':'tangent_at_arc_to_arc','Aarc':12,'Barc':13,'a_end':True,'b_end':True,'same_direction':True},  # b12 ↔ b13
+    {'type':'tangent_at_arc_to_arc','Aarc':13,'Barc':14,'a_end':False,'b_end':False,'same_direction':True},  # b13 ↔ b14
 
-    {'type':'tangent_at_arc_to_arc','Aarc':15,'Barc':16,'a_end':False,'b_end':False,'same_direction':False},  # b15 ↔ b16
-    {'type':'tangent_at_arc_to_arc','Aarc':16,'Barc':17,'a_end':True,'b_end':True,'same_direction':False},  # b16 ↔ b17
+    {'type':'tangent_at_arc_to_arc','Aarc':15,'Barc':16,'a_end':False,'b_end':False,'same_direction':True},  # b15 ↔ b16
+    {'type':'tangent_at_arc_to_arc','Aarc':16,'Barc':17,'a_end':True,'b_end':True,'same_direction':True},  # b16 ↔ b17
     {'type':'tangent_at_arc_to_arc','Aarc':17,'Barc':18,'a_end':False,'b_end':True,'same_direction':True},  # b17 ↔ b18
+]
+
+constraint_list += [
+    {'type':'arc_side','arc':11,'side':'lower','samples':1,'weight':1.0},
+    {'type':'arc_side','arc':12,'side':'lower','samples':1,'weight':1.0},
+    {'type':'arc_side','arc':13,'side':'upper','samples':1,'weight':1.0},
+    {'type':'arc_side','arc':14,'side':'lower','samples':1,'weight':1.0},
+    {'type':'arc_side','arc':15,'side':'upper','samples':1,'weight':1.0},
+    {'type':'arc_side','arc':16,'side':'lower','samples':1,'weight':1.0},
+    {'type':'arc_side','arc':17,'side':'upper','samples':1,'weight':1.0},
+    {'type':'arc_side','arc':18,'side':'upper','samples':1,'weight':1.0},
+]
+
+constraint_list += [
+    {'type':'arc_end_x_side','arc':11,'side':'right','margin':0,'weight':1.0},
+    {'type':'arc_end_x_side','arc':12,'side':'right','margin':0,'weight':1.0},
+    {'type':'arc_end_x_side','arc':13,'side':'left','margin':0,'weight':1.0},
+    {'type':'arc_end_x_side','arc':14,'side':'right','margin':0,'weight':1.0},
+
+    {'type': 'arc_end_x_side', 'arc': 15, 'side': 'left', 'margin': 0, 'weight': 1.0},
+    {'type': 'arc_end_x_side', 'arc': 16, 'side': 'right', 'margin': 0, 'weight': 1.0},
+    {'type': 'arc_end_x_side', 'arc': 17, 'side': 'left', 'margin': 0, 'weight': 1.0},
+    {'type': 'arc_end_x_side', 'arc': 18, 'side': 'left', 'margin': 0, 'weight': 1.0},
+]
+# 终点与起点
+constraint_list += [
+    {'type':'arc_end_y_side','arc':11,'side':'below','margin':1.0,'weight':1.0},
+    {'type':'arc_end_y_side','arc':12,'side':'above','margin':1.0,'weight':1.0},
+    {'type':'arc_end_y_side','arc':13,'side':'below','margin':1.0,'weight':1.0},
+    {'type':'arc_end_y_side','arc':14,'side':'above','margin':1.0,'weight':1.0},
+
+    {'type':'arc_end_y_side','arc':15,'side':'below','margin':1.0,'weight':1.0},
+    {'type':'arc_end_y_side','arc':16,'side':'above','margin':1.0,'weight':1.0},
+    {'type':'arc_end_y_side','arc':17,'side':'below','margin':1.0,'weight':1.0},
+    {'type':'arc_end_y_side','arc':18,'side':'above','margin':1.0,'weight':1.0},
 ]
 
 # ---- 3) 尺寸（来自图上的关键尺寸；避免与已固定坐标冲突）----
@@ -337,16 +330,9 @@ for arc_idx, R in [
 ]:
     constraint_list.append({'type':'radius','arc':arc_idx,'value':R})
 
-# 每个圆弧的扫角不超过 360°
+# 每个圆弧的扫角不超过 180°
 for arc_idx in [9,10,11,12,13,14,15,16,17,18,19,20]:
     constraint_list.append({'type': 'arc_sweep_leq', 'arc': arc_idx, 'max_deg': 180.0})
-# 上链在圆心上侧（上拱）
-# for k in [11,12,16,14]:
-#     constraint_list.append({'type':'arc_side','arc':k,'side':'lower','samples':3,'weight':1.0})
-#
-# # 下链在圆心下侧（下拱）
-# for k in [15,13,17,18]:
-#     constraint_list.append({'type':'arc_side','arc':k,'side':'upper','samples':3,'weight':1.0})
 
 
 
@@ -360,39 +346,36 @@ for arc_idx in [9,10,11,12,13,14,15,16,17,18,19,20]:
 # constraint_list.append({'type':'center_bound', 'arc':14, 'axis':'y', 'op':'between', 'lo':178.0, 'hi':68.0+135})
 #
 
+# import numpy as np
 
-
-
-import numpy as np
-
-# ========== 初值种子（非硬约束，只是利于收敛） ==========
-# 右上/右下斜线给一个大致方向
-for idx, seed in [(5, (260.0, 180.0, 300.0, 200.0)),   # a5  右上斜线
-                  (6, (300.0,  80.0, 330.0,  70.0))]:  # a6  右下斜线
-    L = geom_objects[idx]
-    for j, v in enumerate(seed):
-        if np.isnan(L.params[j]): L.params[j] = v
-
-# 右上/右下小圆角给个 theta 初值（图上 15° 为参考）
-a19 = geom_objects[19];
-if np.isnan(a19.params[3]): a19.params[3] = math.radians(90.0)
-if np.isnan(a19.params[4]): a19.params[4] = math.radians(180.0-15.0)
-
-a20 = geom_objects[20];
-if np.isnan(a20.params[3]): a20.params[3] = math.radians(180.0+15.0)
-if np.isnan(a20.params[4]): a20.params[4] = math.radians(270.0)
-
-# 中央“上链”四段的 theta 初值（上拱）
-for idx, t1, t2 in [(11,  20,  50), (12, 50, 110), (13,110,160), (14,160,185)]:
-    arc = geom_objects[idx]
-    if np.isnan(arc.params[3]): arc.params[3] = math.radians(t1)
-    if np.isnan(arc.params[4]): arc.params[4] = math.radians(t2)
-
-# 中央“下链”四段的 theta 初值（下拱）
-for idx, t1, t2 in [(15, -20,  10), (16, 10,  40), (17, 40,  80), (18, 80, 100)]:
-    arc = geom_objects[idx]
-    if np.isnan(arc.params[3]): arc.params[3] = math.radians(t1)
-    if np.isnan(arc.params[4]): arc.params[4] = math.radians(t2)
+# # ========== 初值种子（非硬约束，只是利于收敛） ==========
+# # 右上/右下斜线给一个大致方向
+# for idx, seed in [(5, (260.0, 180.0, 300.0, 200.0)),   # a5  右上斜线
+#                   (6, (300.0,  80.0, 330.0,  70.0))]:  # a6  右下斜线
+#     L = geom_objects[idx]
+#     for j, v in enumerate(seed):
+#         if np.isnan(L.params[j]): L.params[j] = v
+#
+# # 右上/右下小圆角给个 theta 初值（图上 15° 为参考）
+# a19 = geom_objects[19];
+# if np.isnan(a19.params[3]): a19.params[3] = math.radians(90.0)
+# if np.isnan(a19.params[4]): a19.params[4] = math.radians(180.0-15.0)
+#
+# a20 = geom_objects[20];
+# if np.isnan(a20.params[3]): a20.params[3] = math.radians(180.0+15.0)
+# if np.isnan(a20.params[4]): a20.params[4] = math.radians(270.0)
+#
+# # 中央“上链”四段的 theta 初值（上拱）
+# for idx, t1, t2 in [(11,  20,  50), (12, 50, 110), (13,110,160), (14,160,185)]:
+#     arc = geom_objects[idx]
+#     if np.isnan(arc.params[3]): arc.params[3] = math.radians(t1)
+#     if np.isnan(arc.params[4]): arc.params[4] = math.radians(t2)
+#
+# # 中央“下链”四段的 theta 初值（下拱）
+# for idx, t1, t2 in [(15, -20,  10), (16, 10,  40), (17, 40,  80), (18, 80, 100)]:
+#     arc = geom_objects[idx]
+#     if np.isnan(arc.params[3]): arc.params[3] = math.radians(t1)
+#     if np.isnan(arc.params[4]): arc.params[4] = math.radians(t2)
 
 # ========== 可选：R170 圆心到基线的垂距 68 ==========
 # constraint_list.append({'type':'center_distance_y','arc':16,'baseline_y':0.0,'value':68.0})

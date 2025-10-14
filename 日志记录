@@ -14,6 +14,13 @@ wheelobject_5.py 开始尝试加入圆弧是属于上半圆还是下半圆，
 wheelobject_7.py 引入切线方向， 内切圆、 外切圆
 
 
+wheelobject_8.py 弧线的位置约束
+
+wheelobject_9.py 弧线内切和外切的约束
+
+
+wheelobject_10.py 统一弧线有关点的定义
+
 
 
 

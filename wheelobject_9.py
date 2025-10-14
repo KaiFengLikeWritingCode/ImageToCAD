@@ -153,9 +153,6 @@ constraint_list += [
     {'type':'coincident','p1':1,'which1':1,'p2':9,'which2':1},   # a1.end == b9.start
     {'type':'coincident','p1':9,'which1':0,'p2':3,'which2':0},   # b9.end == a3.start
     {'type':'coincident','p1':3,'which1':1,'p2':11,'which2':0},  # a3.end == b11.start (上链第一弧)
-    # {'type': 'intersect_line_arc_at', 'line': 1, 'which': 'end', 'arc': 9, 'arc_end': 'end'},
-    # {'type': 'intersect_line_arc_at', 'line': 3, 'which': 'start', 'arc': 9, 'arc_end': 'start'},
-    # {'type': 'intersect_line_arc_at', 'line': 3, 'which': 'end', 'arc': 11, 'arc_end': 'start'},
 ]
 
 # 上链：b11 → b12 → b13 → b14
@@ -163,9 +160,6 @@ constraint_list += [
     {'type':'coincident','p1':11,'which1':1,'p2':12,'which2':0},
     {'type':'coincident','p1':12,'which1':1,'p2':13,'which2':1},
     {'type':'coincident','p1':13,'which1':0,'p2':14,'which2':0},
-    # {'type': 'intersect_arc_arc_at', 'Aarc': 11, 'a_end': 'end', 'Barc': 12, 'b_end': 'start'},
-    # {'type': 'intersect_arc_arc_at', 'Aarc': 12, 'a_end': 'end', 'Barc': 13, 'b_end': 'end'},
-    # {'type': 'intersect_arc_arc_at', 'Aarc': 13, 'a_end': 'start', 'Barc': 14, 'b_end': 'start'},
 ]
 
 # 上链末 → 右上斜线 → 右上 R3 → 右上水平 → 右侧基准竖线 top
@@ -173,10 +167,6 @@ constraint_list += [
     {'type':'coincident','p1':14,'which1':1,'p2':5,'which2':0},   # b14.end == a5.start
     {'type':'coincident','p1':5, 'which1':1,'p2':19,'which2':1},  # a5.end  == b19.start
     {'type':'coincident','p1':19,'which1':0,'p2':7,'which2':0},   # b19.end == a7.start
-    # {'type':'intersect_line_arc_at', 'line':5, 'which':'start', 'arc':14, 'arc_end':'end'},
-    # {'type':'intersect_line_arc_at', 'line':5, 'which':'end', 'arc':19, 'arc_end':'end'},
-    # {'type':'intersect_line_arc_at', 'line':7, 'which':'start', 'arc':19, 'arc_end':'start'},
-
     {'type':'coincident','p1':7, 'which1':1,'p2':21,'which2':1},  # a7.end  == a21.top
 ]
 
@@ -186,9 +176,6 @@ constraint_list += [
     {'type':'coincident','p1':2,'which1':1,'p2':10,'which2':0},   # a2.end   == b10.start
     {'type':'coincident','p1':10,'which1':1,'p2':4,'which2':0},   # b10.end  == a4.start
     {'type':'coincident','p1':4,'which1':1,'p2':15,'which2':1},   # a4.end   == b15.start (下链第一弧)
-    # {'type':'intersect_line_arc_at', 'line':2, 'which':'end', 'arc':10, 'arc_end':'start'},
-    # {'type':'intersect_line_arc_at', 'line':4, 'which':'start', 'arc':10, 'arc_end':'end'},
-    # {'type':'intersect_line_arc_at', 'line':4, 'which':'end', 'arc':15, 'arc_end':'end'},
 ]
 
 # 下链：b15 → b16 → b17 → b18
@@ -196,9 +183,6 @@ constraint_list += [
     {'type':'coincident','p1':15,'which1':0,'p2':16,'which2':0},
     {'type':'coincident','p1':16,'which1':1,'p2':17,'which2':1},
     {'type':'coincident','p1':17,'which1':0,'p2':18,'which2':1},
-    # {'type': 'intersect_arc_arc_at', 'Aarc': 15, 'a_end': 'start', 'Barc': 16, 'b_end': 'start'},
-    # {'type': 'intersect_arc_arc_at', 'Aarc': 16, 'a_end': 'end', 'Barc': 17, 'b_end': 'end'},
-    # {'type': 'intersect_arc_arc_at', 'Aarc': 17, 'a_end': 'start', 'Barc': 18, 'b_end': 'end'},
 ]
 
 # 下链末 → 右下斜线 → 右下 R3 → 右下水平 → 右侧基准竖线 bottom
@@ -206,11 +190,6 @@ constraint_list += [
     {'type':'coincident','p1':18,'which1':0,'p2':6, 'which2':0},  # b18.end == a6.start
     {'type':'coincident','p1':6, 'which1':1,'p2':20,'which2':0},  # a6.end  == b20.start
     {'type':'coincident','p1':20,'which1':1,'p2':8, 'which2':0},  # b20.end == a8.start
-
-    # {'type': 'intersect_line_arc_at', 'line': 6, 'which': 'start', 'arc': 18, 'arc_end': 'start'},
-    # {'type': 'intersect_line_arc_at', 'line': 6, 'which': 'end', 'arc': 20, 'arc_end': 'start'},
-    # {'type': 'intersect_line_arc_at', 'line': 8, 'which': 'start', 'arc': 20, 'arc_end': 'end'},
-
     {'type':'coincident','p1':8, 'which1':1,'p2':21,'which2':0},  # a8.end  == a21.bottom
 ]
 
@@ -328,34 +307,33 @@ constraint_list.append({'type':'point_distance_y', 'p1':11, 'which1':1, 'p2':15,
 
 
 # 弧 ↔ 弧：中央蛇形上/下两条链，逐段相切
-constraint_list += [
-    {'type':'tangent_at_arc_to_arc','Aarc':11,'Barc':12,'a_end':True,'b_end':False,'same_direction':True},  # b11 ↔ b12
-    {'type':'tangent_at_arc_to_arc','Aarc':12,'Barc':13,'a_end':True,'b_end':True,'same_direction':False},  # b12 ↔ b13
-    {'type':'tangent_at_arc_to_arc','Aarc':13,'Barc':14,'a_end':False,'b_end':False,'same_direction':False},  # b13 ↔ b14
-
-    {'type':'tangent_at_arc_to_arc','Aarc':15,'Barc':16,'a_end':False,'b_end':False,'same_direction':False},  # b15 ↔ b16
-    {'type':'tangent_at_arc_to_arc','Aarc':16,'Barc':17,'a_end':True,'b_end':True,'same_direction':False},  # b16 ↔ b17
-    {'type':'tangent_at_arc_to_arc','Aarc':17,'Barc':18,'a_end':False,'b_end':True,'same_direction':True},  # b17 ↔ b18
-]
-
-
 # constraint_list += [
-#     # 上链
-#     {'type':'tangent_at_endpoint_arc_arc','Aarc':11,'Barc':12,
-#      'a_end':True,'b_end':False,'same_direction':True,'tangent_type':'internal'},
-#     {'type':'tangent_at_endpoint_arc_arc','Aarc':12,'Barc':13,
-#      'a_end':True,'b_end':True ,'same_direction':True,'tangent_type':'external'},
-#     {'type':'tangent_at_endpoint_arc_arc','Aarc':13,'Barc':14,
-#      'a_end':False,'b_end':False,'same_direction':True,'tangent_type':'external'},
+#     {'type':'tangent_at_arc_to_arc','Aarc':11,'Barc':12,'a_end':True,'b_end':False,'same_direction':True},  # b11 ↔ b12
+#     {'type':'tangent_at_arc_to_arc','Aarc':12,'Barc':13,'a_end':True,'b_end':True,'same_direction':True},  # b12 ↔ b13
+#     {'type':'tangent_at_arc_to_arc','Aarc':13,'Barc':14,'a_end':False,'b_end':False,'same_direction':True},  # b13 ↔ b14
 #
-#     # 下链
-#     {'type':'tangent_at_endpoint_arc_arc','Aarc':15,'Barc':16,
-#      'a_end':False,'b_end':False,'same_direction':True,'tangent_type':'external'},
-#     {'type':'tangent_at_endpoint_arc_arc','Aarc':16,'Barc':17,
-#      'a_end':True ,'b_end':True ,'same_direction':True,'tangent_type':'external'},
-#     {'type':'tangent_at_endpoint_arc_arc','Aarc':17,'Barc':18,
-#      'a_end':False,'b_end':True ,'same_direction':True,'tangent_type':'internal'},
+#     {'type':'tangent_at_arc_to_arc','Aarc':15,'Barc':16,'a_end':False,'b_end':False,'same_direction':True},  # b15 ↔ b16
+#     {'type':'tangent_at_arc_to_arc','Aarc':16,'Barc':17,'a_end':True,'b_end':True,'same_direction':True},  # b16 ↔ b17
+#     {'type':'tangent_at_arc_to_arc','Aarc':17,'Barc':18,'a_end':False,'b_end':True,'same_direction':True},  # b17 ↔ b18
 # ]
+
+constraint_list += [
+    # 上链
+    {'type':'tangent_at_endpoint_arc_arc','Aarc':11,'Barc':12,
+     'a_end':True,'b_end':False,'same_direction':True,'tangent_type':'internal'},
+    {'type':'tangent_at_endpoint_arc_arc','Aarc':12,'Barc':13,
+     'a_end':True,'b_end':True ,'same_direction':True,'tangent_type':'external'},
+    {'type':'tangent_at_endpoint_arc_arc','Aarc':13,'Barc':14,
+     'a_end':False,'b_end':False,'same_direction':True,'tangent_type':'external'},
+
+    # 下链
+    {'type':'tangent_at_endpoint_arc_arc','Aarc':15,'Barc':16,
+     'a_end':False,'b_end':False,'same_direction':True,'tangent_type':'external'},
+    {'type':'tangent_at_endpoint_arc_arc','Aarc':16,'Barc':17,
+     'a_end':True ,'b_end':True ,'same_direction':True,'tangent_type':'external'},
+    {'type':'tangent_at_endpoint_arc_arc','Aarc':17,'Barc':18,
+     'a_end':False,'b_end':True ,'same_direction':True,'tangent_type':'internal'},
+]
 
 
 

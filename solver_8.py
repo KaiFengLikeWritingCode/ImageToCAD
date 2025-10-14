@@ -48,122 +48,6 @@ class Arc:
         self.params[~self.fixed_mask] = values
 
 
-# -----------------------------
-# 构建方程
-# -----------------------------
-# def constraints(vars, geom_objects, constraint_list):
-#     eqs = []
-#     idx = 0
-#     # 将 vars 拆分到各个对象的可优化参数
-#     for obj in geom_objects:
-#         # 这里的 obj.params 会随着 vars 的变化而变化
-#         obj.set_optimizable_params(vars[idx:idx+len(obj.get_optimizable_params())])
-#         idx += len(obj.get_optimizable_params())
-#
-#     # 遍历约束
-#     for c in constraint_list:
-#         type_ = c['type']
-#         if type_ == 'length':
-#             line = geom_objects[c['line']]
-#             (x1,y1),(x2,y2) = line.points()
-#             eqs.append((x2-x1)**2 + (y2-y1)**2 - c['value']**2)
-#         elif type_ == 'radius':
-#             arc = geom_objects[c['arc']]
-#             eqs.append(arc.params[2] - c['value'])
-#         elif type_ == 'point_distance_x':
-#             p1 = geom_objects[c['p1']].points()[c['which1']]
-#             p2 = geom_objects[c['p2']].points()[c['which2']]
-#             eqs.append(p2[0] - p1[0] - c['value'])
-#         elif type_ == 'point_distance_y':
-#             p1 = geom_objects[c['p1']].points()[c['which1']]
-#             p2 = geom_objects[c['p2']].points()[c['which2']]
-#             eqs.append(p2[1] - p1[1] - c['value'])
-#         elif type_ == 'tangent_line_arc':
-#             line = geom_objects[c['line']]
-#             arc = geom_objects[c['arc']]
-#             # 点到直线距离 = r
-#             x1,y1 = arc.params[0], arc.params[1]
-#             r = arc.params[2]
-#             lx1,ly1 = line.points()[0]
-#             lx2,ly2 = line.points()[1]
-#             A = ly1 - ly2
-#             B = lx2 - lx1
-#             C = lx1*ly2 - lx2*ly1
-#             # dist = np.abs(A*x1 + B*y1 + C)/np.sqrt(A**2 + B**2)
-#             # eqs.append(dist - r)
-#             den = A * A + B * B
-#             if den < 1e-12:
-#                 # 线段退化（x1,y1==x2,y2），给一个温和的惩罚以拉开端点
-#                 eqs.append(1.0)  # 或者 eqs.append((lx2-lx1)**2 + (ly2-ly1)**2 - 1.0)
-#             else:
-#                 signed = (A * x1 + B * y1 + C)
-#                 # (距离^2 - r^2) 作为残差，更平滑
-#                 eqs.append(signed * signed / den - r * r)
-#
-#         elif type_ == 'coincident':
-#             p1 = geom_objects[c['p1']].points()[c['which1']]
-#             p2 = geom_objects[c['p2']].points()[c['which2']]
-#             eqs.append(p1[0]-p2[0])
-#             eqs.append(p1[1]-p2[1])
-#
-#         # --- 在 constraints() 里追加三种新类型 ---
-#         elif type_ == 'tangent_at_arc_start_to_line':
-#             line = geom_objects[c['line']]
-#             arc = geom_objects[c['arc']]
-#             (x1, y1), (x2, y2) = line.points()
-#             vx, vy = x2 - x1, y2 - y1  # 线段方向
-#             t = arc.params[3]  # theta1
-#             tx, ty = -np.sin(t), np.cos(t)  # 弧在 start 处的切向
-#             # 平行性：叉积为 0
-#             eqs.append(vx * ty - vy * tx)
-#
-#         elif type_ == 'tangent_at_arc_end_to_line':
-#             line = geom_objects[c['line']]
-#             arc = geom_objects[c['arc']]
-#             (x1, y1), (x2, y2) = line.points()
-#             vx, vy = x2 - x1, y2 - y1
-#             t = arc.params[4]  # theta2
-#             tx, ty = -np.sin(t), np.cos(t)
-#             eqs.append(vx * ty - vy * tx)
-#
-#
-#         elif type_ == 'tangent_arc_arc':
-#             # Aarc 与 Barc 在各自端点相切（G1）。默认 A 用 end(t2)，B 用 start(t1)。
-#             Aarc = geom_objects[c['Aarc']]
-#             Barc = geom_objects[c['Barc']]
-#             a_end = c.get('a_end', True)  # True→用 A.t2；False→用 A.t1
-#             b_end = c.get('b_end', False)  # True→用 B.t2；False→用 B.t1
-#
-#             ta = Aarc.params[4] if a_end else Aarc.params[3]
-#             tb = Barc.params[4] if b_end else Barc.params[3]
-#
-#             # 弧在角度 t 的切向向量（未归一化也可）
-#             txa, tya = -np.sin(ta), np.cos(ta)
-#             txb, tyb = -np.sin(tb), np.cos(tb)
-#
-#             # 平行性（允许同向或反向）：叉积=0
-#             eqs.append(txa * tyb - tya * txb)
-#         elif type_ == 'tangent_at_arc_start_to_line':
-#             line = geom_objects[c['line']]
-#             arc = geom_objects[c['arc']]
-#             (x1, y1), (x2, y2) = line.points()
-#             A, B = (y1 - y2), (x2 - x1)
-#             # 直线方向向量（单位化可不必，叉积只需方向）
-#             lx, ly = (x2 - x1), (y2 - y1)
-#             t = arc.params[3]  # theta1
-#             tx, ty = -np.sin(t), np.cos(t)  # 弧在 start 的切向
-#             eqs.append(lx * ty - ly * tx)
-#
-#         elif type_ == 'tangent_at_arc_end_to_line':
-#             line = geom_objects[c['line']]
-#             arc = geom_objects[c['arc']]
-#             lx, ly = (line.params[2] - line.params[0]), (line.params[3] - line.params[1])
-#             t = arc.params[4]  # theta2
-#             tx, ty = -np.sin(t), np.cos(t)
-#             eqs.append(lx * ty - ly * tx)
-#
-#
-#     return eqs
 
 
 def constraints(vars, geom_objects, constraint_list):
@@ -242,23 +126,6 @@ def constraints(vars, geom_objects, constraint_list):
             eqs.append(over)
 
 
-
-        # elif type_ == 'tangent_arc_arc':
-        #     # Aarc 与 Barc 在各自端点相切（G1）。默认 A 用 end(t2)，B 用 start(t1)。
-        #     Aarc = geom_objects[c['Aarc']]
-        #     Barc = geom_objects[c['Barc']]
-        #     a_end = c.get('a_end', True)  # True→用 A.t2；False→用 A.t1
-        #     b_end = c.get('b_end', False)  # True→用 B.t2；False→用 B.t1
-        #
-        #     ta = Aarc.params[4] if a_end else Aarc.params[3]
-        #     tb = Barc.params[4] if b_end else Barc.params[3]
-        #
-        #     # 弧在角度 t 的切向向量（未归一化也可）
-        #     txa, tya = -np.sin(ta), np.cos(ta)
-        #     txb, tyb = -np.sin(tb), np.cos(tb)
-        #
-        #     # 平行性（允许同向或反向）：叉积=0
-        #     eqs.append(txa * tyb - tya * txb)
         elif type_ == 'tangent_at_arc_to_arc':
             """
             端点处弧-弧相切（G1）
@@ -402,7 +269,34 @@ def constraints(vars, geom_objects, constraint_list):
                     eqs.append(w * np.maximum(0.0, y_rel))
                 else:
                     raise ValueError("arc_side.side must be 'upper' or 'lower'")
+        elif type_ == 'line_second_side':
+            """
+            约束线段的第二个点 (x2,y2) 相对第一个点 (x1,y1) 的上下关系。
+            用法：
+              {'type':'line_second_side','line':i,
+               'side':'above'/'below', 'margin':0.0, 'weight':1.0}
+            解释：
+              side='above' → y2 >= y1 (+ margin)
+              side='below' → y2 <= y1 (- margin)
+              margin：给一点安全间隙，避免正好贴边抖动
+            """
+            L = geom_objects[c['line']]
+            (x1, y1), (x2, y2) = L.points()
 
+            side = c.get('side', 'above')  # 'above' or 'below'
+            margin = float(c.get('margin', 0.0))
+            w = float(c.get('weight', 1.0))
+
+            dy = y2 - y1
+
+            if side == 'above':
+                # 需要 dy >= margin → 违反量 = margin - dy
+                eqs.append(w * np.maximum(0.0, margin - dy))
+            elif side == 'below':
+                # 需要 dy <= -margin → 违反量 = dy + margin
+                eqs.append(w * np.maximum(0.0, dy + margin))
+            else:
+                raise ValueError("line_second_side.side must be 'above' or 'below'")
         elif type_ == 'line_side_of_tangent':
             """
             相对由起点+角度 θ 定义的“切线”，要求线段的第二个点在其上方/下方。
@@ -452,6 +346,47 @@ def constraints(vars, geom_objects, constraint_list):
                 eqs.append(w * np.maximum(0.0, v_perp + margin))
             else:
                 raise ValueError("line_side_of_tangent.side must be 'above' or 'below'")
+
+        elif type_ == 'arc_side_of_line':
+            """
+            让整段弧（除相切端点附近）都在指定直线的左/右侧（相对 line 的方向 p0->p1）。
+            line, arc, anchor('start'/'end'), side('left'/'right'), samples, margin, weight
+            """
+            L = geom_objects[c['line']]
+            arc = geom_objects[c['arc']]
+            (x0, y0), (x1, y1) = L.points()
+            vx, vy = (x1 - x0), (y1 - y0)  # 线段方向
+
+            cx, cy, r, t1, t2 = arc.params
+            side = c.get('side', 'left')
+            anchor = c.get('anchor', 'start')
+            samples = int(c.get('samples', 3))
+            margin = float(c.get('margin', 0.0))
+            w = float(c.get('weight', 1.0))
+
+            ts = []
+            if samples <= 1:
+                ts = [0.5 * (t1 + t2)]
+            else:
+                eps = 1e-3
+                for tt in [t1, 0.5 * (t1 + t2), t2]:
+                    if anchor == 'start' and abs(tt - t1) < eps: continue
+                    if anchor == 'end' and abs(tt - t2) < eps: continue
+                    ts.append(tt)
+                if not ts: ts = [0.5 * (t1 + t2)]
+
+            for t in ts:
+                px = cx + r * np.cos(t);
+                py = cy + r * np.sin(t)
+                wx, wy = (px - x0), (py - y0)
+                z = vx * wy - vy * wx  # z>0 左侧；z<0 右侧
+                if side == 'left':
+                    eqs.append(w * np.maximum(0.0, margin - z))
+                elif side == 'right':
+                    eqs.append(w * np.maximum(0.0, z + margin))
+                else:
+                    raise ValueError("arc_side_of_line.side must be 'left' or 'right'")
+
 
     return eqs
 
@@ -533,7 +468,7 @@ if __name__ == "__main__":
     # Example 1: Line with only start point fixed, Arc with only radius fixed
     print("Example 1: 车轮生成示例")
     # extract the objects and constrainst from wheel.py
-    from wheelobject_4 import geom_objects, constraint_list
+    from wheelobject import geom_objects, constraint_list
 
     print("Geom objects:")
     for obj in geom_objects:

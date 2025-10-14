@@ -279,6 +279,68 @@ constraint_list += [
 
 
 
+# # 每个圆弧的扫角不超过 360°
+for arc_idx in [9,10,11,12,13,14,15,16,17,18,19,20]:
+    constraint_list.append({'type': 'arc_sweep_leq', 'arc': arc_idx, 'max_deg': 180.0})
+# # 上链在圆心上侧（上拱）
+for k in [11,12,16,14]:
+    constraint_list.append({'type':'arc_side','arc':k,'side':'lower','samples':3,'weight':1.0})
+#
+# # 下链在圆心下侧（下拱）
+for k in [15,13,17,18]:
+    constraint_list.append({'type':'arc_side','arc':k,'side':'upper','samples':3,'weight':1.0})
+
+for k in [11,12,14,16]:
+    constraint_list.append({'type':'arc_endpoint_relation','arc':k,'mode':'x_order','order':'asc','margin':0.0})
+
+for k in [13,15,17,18]:
+    constraint_list.append({'type':'arc_endpoint_relation','arc':k,'mode':'x_order','order':'desc','margin':0.0})
+
+# # # # 上链在两条相邻切线形成的走廊内
+# for k in [11,12,13,14]:
+#     constraint_list += [
+#         # {'type':'arc_side_of_line','line':3,'arc':k,'anchor':'start','side':'right','samples':3,'margin':0.0,'weight':1.0},
+#         # {'type':'arc_side_of_line','line':5,'arc':k,'anchor':'end'  ,'side':'left','samples':3,'margin':0.0,'weight':1.0},
+#         {'type': 'arc_side_of_line_simple', 'line': 3, 'arc': k, 'side': 'right', 'samples': 5},
+#         {'type': 'arc_side_of_line_simple', 'line': 5, 'arc': k, 'side': 'left', 'samples': 5},
+#         # {'type': 'arc_side_of_line_simple', 'line': 1, 'arc': k, 'side': 'right', 'samples': 5},
+#         # {'type': 'arc_side_of_line_simple', 'line': 7, 'arc': k, 'side': 'left', 'samples': 5},
+#         # {'type': 'arc_side_of_line_simple', 'line': 0, 'arc': k, 'side': 'right', 'samples': 5},
+#         # {'type': 'arc_side_of_line_simple', 'line': 21, 'arc': k, 'side': 'left', 'samples': 5},
+#     ]
+# #
+# # # 下链在两条相邻切线形成的走廊内
+# for k in [15,16,17,18]:
+#     constraint_list += [
+#         # {'type':'arc_side_of_line','line':4,'arc':k,'anchor':'end','side':'right','samples':3,'margin':0.0,'weight':1.0},
+#         # {'type':'arc_side_of_line','line':6,'arc':k,'anchor':'start'  ,'side':'left' ,'samples':3,'margin':0.0,'weight':1.0},
+#         {'type': 'arc_side_of_line_simple', 'line': 4, 'arc': k, 'side': 'right', 'samples': 5},
+#         {'type': 'arc_side_of_line_simple', 'line': 6, 'arc': k, 'side': 'left', 'samples': 5},
+#         # {'type': 'arc_side_of_line_simple', 'line': 2, 'arc': k, 'side': 'right', 'samples': 5},
+#         # {'type': 'arc_side_of_line_simple', 'line': 8, 'arc': k, 'side': 'left', 'samples': 5},
+#         # {'type': 'arc_side_of_line_simple', 'line': 0, 'arc': k, 'side': 'right', 'samples': 5},
+#         # {'type': 'arc_side_of_line_simple', 'line': 21, 'arc': k, 'side': 'left', 'samples': 5},
+#     ]
+
+
+# ---- 3) 尺寸（来自图上的关键尺寸；避免与已固定坐标冲突）----
+# 左上水平终点相对左竖顶的水平偏移 = 132
+constraint_list.append({'type':'point_distance_x','p1':0,'which1':1,'p2':1,'which2':1,'value':132.0})
+
+# 右下水平短边长度 = 24
+constraint_list.append({'type':'length','line':8,'value':24.0})
+constraint_list.append({'type':'length','line':7,'value':24.0})
+# 如需总宽/右侧高度等，可按需要再加；a21 已用固定坐标表达了 135 与 110 的高度关系
+
+# ---- 4) 半径（硬约束）----
+for arc_idx, R in [
+    (9,5.0),(10,5.0),            # 左侧倒角
+    (11,40.0),(12,130.0),(13,195.0),(14,40.0),   # 上链
+    (15,63.0),(16,170.0),(17,176.0),(18,40.0),   # 下链
+    (19,3.0),(20,3.0),           # 右上/右下小圆角
+]:
+    constraint_list.append({'type':'radius','arc':arc_idx,'value':R})
+
 # 每个圆弧的扫角不超过 360°
 for arc_idx in [9,10,11,12,13,14,15,16,17,18,19,20]:
     constraint_list.append({'type': 'arc_sweep_leq', 'arc': arc_idx, 'max_deg': 180.0})
@@ -305,29 +367,6 @@ for k in [15,16,17,18]:
     ]
 
 
-# ---- 3) 尺寸（来自图上的关键尺寸；避免与已固定坐标冲突）----
-# 左上水平终点相对左竖顶的水平偏移 = 132
-constraint_list.append({'type':'point_distance_x','p1':0,'which1':1,'p2':1,'which2':1,'value':132.0})
-
-# 右下水平短边长度 = 24
-constraint_list.append({'type':'length','line':8,'value':24.0})
-constraint_list.append({'type':'length','line':7,'value':24.0})
-# 如需总宽/右侧高度等，可按需要再加；a21 已用固定坐标表达了 135 与 110 的高度关系
-
-# ---- 4) 半径（硬约束）----
-for arc_idx, R in [
-    (9,5.0),(10,5.0),            # 左侧倒角
-    (11,40.0),(12,130.0),(13,195.0),(14,40.0),   # 上链
-    (15,63.0),(16,170.0),(17,176.0),(18,40.0),   # 下链
-    (19,3.0),(20,3.0),           # 右上/右下小圆角
-]:
-    constraint_list.append({'type':'radius','arc':arc_idx,'value':R})
-
-# 每个圆弧的扫角不超过 360°
-for arc_idx in [9,10,11,12,13,14,15,16,17,18,19,20]:
-    constraint_list.append({'type': 'arc_sweep_leq', 'arc': arc_idx, 'max_deg': 180.0})
-
-
 
 # constraint_list.append({'type':'center_bound', 'arc':12, 'axis':'y', 'op':'ge', 'value':178.0, 'margin':2.0, 'weight':2.0})
 # constraint_list.append({'type':'center_bound', 'arc':16, 'axis':'y', 'op':'ge', 'value':178.0, 'margin':2.0, 'weight':2.0})
@@ -338,10 +377,6 @@ for arc_idx in [9,10,11,12,13,14,15,16,17,18,19,20]:
 # constraint_list.append({'type':'center_bound', 'arc':18, 'axis':'y', 'op':'between', 'lo':68.0, 'hi':178.0})
 # constraint_list.append({'type':'center_bound', 'arc':14, 'axis':'y', 'op':'between', 'lo':178.0, 'hi':68.0+135})
 #
-
-
-
-
 import numpy as np
 
 # ========== 初值种子（非硬约束，只是利于收敛） ==========

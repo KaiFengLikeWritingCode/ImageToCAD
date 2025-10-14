@@ -47,7 +47,20 @@ class Arc:
         """Set the optimizable parameters with solved values"""
         self.params[~self.fixed_mask] = values
 
-
+def soft_hinge(z, k=10.0):
+    """
+    稳定版：soft_hinge(z,k) = softplus(k*z)/k
+    softplus(x) = log1p(exp(x)) 的数值稳定实现：
+      x>0: x + log1p(exp(-x))
+      x<=0: log1p(exp(x))
+    """
+    x = k * z
+    # 逐元素稳定计算
+    pos = x > 0
+    out = np.empty_like(x, dtype=float) if isinstance(x, np.ndarray) else float(x)
+    # x>0 分支
+    out = np.where(pos, x + np.log1p(np.exp(-x)), np.log1p(np.exp(x)))
+    return out / k
 def constraints(vars, geom_objects, constraint_list):
     eqs = []
     idx = 0
@@ -186,53 +199,9 @@ def constraints(vars, geom_objects, constraint_list):
             tx, ty = -np.sin(t), np.cos(t)
             eqs.append(lx * ty - ly * tx)
 
-        # ---------- 圆心单轴范围约束（软不等式） ----------
-        # 用法一：{'type':'center_bound','arc':k, 'axis':'x'/'y', 'op':'ge'/'le', 'value':..., 'margin':0.0, 'weight':1.0}
-        # 用法二：{'type':'center_bound','arc':k, 'axis':'x'/'y', 'op':'between', 'lo':..., 'hi':..., 'margin':0.0, 'weight':1.0}
-        elif type_ == 'center_bound':
-            arc    = geom_objects[c['arc']]
-            axis   = c.get('axis', 'x')          # 'x' or 'y'
-            op     = c.get('op', 'ge')           # 'ge'/'le'/'between'
-            margin = float(c.get('margin', 0.0)) # 允许的软缓冲，默认0
-            w      = float(c.get('weight', 1.0)) # 权重，默认1
 
-            coord = arc.params[0] if axis == 'x' else arc.params[1]
 
-            if op == 'ge':
-                # coord >= value  ->  违反量 = value - coord - margin
-                viol = (float(c['value']) - coord) - margin
-                eqs.append(w * np.maximum(0.0, viol))
 
-            elif op == 'le':
-                # coord <= value  ->  违反量 = coord - value - margin
-                viol = (coord - float(c['value'])) - margin
-                eqs.append(w * np.maximum(0.0, viol))
-
-            elif op == 'between':
-                lo = float(c['lo']); hi = float(c['hi'])
-                # 低于下界 or 高于上界 才惩罚
-                viol_lo = (lo - coord) - margin
-                viol_hi = (coord - hi) - margin
-                eqs.append(w * np.maximum(0.0, viol_lo))
-                eqs.append(w * np.maximum(0.0, viol_hi))
-
-            else:
-                raise ValueError("center_bound.op must be 'ge', 'le', or 'between'")
-
-        # ---------- 圆心矩形盒范围约束（一次性给 x/y 上下界） ----------
-        # 用法：{'type':'center_in_box','arc':k, 'xmin':..,'xmax':..,'ymin':..,'ymax':.., 'margin':0.0, 'weight':1.0}
-        elif type_ == 'center_in_box':
-            arc    = geom_objects[c['arc']]
-            cx, cy = arc.params[0], arc.params[1]
-            xmin   = c.get('xmin', -np.inf); xmax = c.get('xmax',  np.inf)
-            ymin   = c.get('ymin', -np.inf); ymax = c.get('ymax',  np.inf)
-            margin = float(c.get('margin', 0.0))
-            w      = float(c.get('weight', 1.0))
-
-            if np.isfinite(xmin): eqs.append(w * np.maximum(0.0, (xmin - cx) - margin))
-            if np.isfinite(xmax): eqs.append(w * np.maximum(0.0, (cx   - xmax) - margin))
-            if np.isfinite(ymin): eqs.append(w * np.maximum(0.0, (ymin - cy) - margin))
-            if np.isfinite(ymax): eqs.append(w * np.maximum(0.0, (cy   - ymax) - margin))
 
         elif type_ == 'arc_side':
             """
@@ -268,55 +237,98 @@ def constraints(vars, geom_objects, constraint_list):
                 else:
                     raise ValueError("arc_side.side must be 'upper' or 'lower'")
 
-        elif type_ == 'line_side_of_tangent':
+        elif type_ == 'arc_endpoint_relation':
             """
-            相对由起点+角度 θ 定义的“切线”，要求线段的第二个点在其上方/下方。
-            用法：
-              {'type':'line_side_of_tangent','line':i,
-               'anchor':'start'/'end',   # 角线过哪个端点，通常用 'start'
-               'theta':.. 或 'theta_deg':..,
-               'side':'above'/'below',
-               'margin':0.0,'weight':1.0}
-            备注：
-              这是“侧”的约束，不强制线段方向等于 θ。
-              若同时要线段方向=θ，可叠加 'line_align_angle'。
+            约束圆弧两端点 P1(t1)、P2(t2) 的相对关系。
+            用法示例：
+              # 1) X 顺序：要求 x2 >= x1 (+margin)
+              {'type':'arc_endpoint_relation','arc':k,'mode':'x_order','order':'asc','margin':0.0}
+        
+              # 2) Y 顺序：要求 y2 <= y1 (-margin)
+              {'type':'arc_endpoint_relation','arc':k,'mode':'y_order','order':'desc','margin':0.1}
+        
+              # 3) X 差值等式：x2 - x1 = dx
+              {'type':'arc_endpoint_relation','arc':k,'mode':'x_diff_eq','value':10.0}
+        
+              # 4) 端点距离等/不等式：
+              {'type':'arc_endpoint_relation','arc':k,'mode':'dist_eq','value':25.0}
+              {'type':'arc_endpoint_relation','arc':k,'mode':'dist_ge','value':20.0}
+              {'type':'arc_endpoint_relation','arc':k,'mode':'dist_le','value':30.0}
+        
+              # 5) 方向锥：P1→P2 指向与角度 alpha（弧度）相差不超过 phi（半角）
+              {'type':'arc_endpoint_relation','arc':k,'mode':'dir_cone','alpha':0.0,'phi':np.deg2rad(15)}
             """
-            L = geom_objects[c['line']]
-            (xa, ya), (xb, yb) = L.points()
-            anchor = c.get('anchor', 'start')  # 'start' or 'end'
-            if anchor == 'start':
-                px, py = xa, ya
-                qx, qy = xb, yb  # 目标是“第二点” q
+
+
+            arc = geom_objects[c['arc']]
+            cx, cy, r, t1, t2 = arc.params
+
+            # 端点
+            x1, y1 = cx + r * np.cos(t1), cy + r * np.sin(t1)
+            x2, y2 = cx + r * np.cos(t2), cy + r * np.sin(t2)
+
+            mode = c.get('mode', 'x_order')
+
+            # ---- 1) X / Y 顺序：asc(≥) 或 desc(≤) ----
+            if mode == 'x_order':
+                order = c.get('order', 'asc')  # 'asc' or 'desc'
+                margin = float(c.get('margin', 0.0))
+                if order == 'asc':  # x2 >= x1 + margin
+                    eqs.append(soft_hinge((x1 + margin) - x2))
+                elif order == 'desc':  # x2 <= x1 - margin
+                    eqs.append(soft_hinge(x2 - (x1 - margin)))
+                else:
+                    raise ValueError("x_order.order must be 'asc' or 'desc'")
+
+            elif mode == 'y_order':
+                order = c.get('order', 'asc')  # 'asc' or 'desc'
+                margin = float(c.get('margin', 0.0))
+                if order == 'asc':  # y2 >= y1 + margin
+                    eqs.append(soft_hinge((y1 + margin) - y2))
+                elif order == 'desc':  # y2 <= y1 - margin
+                    eqs.append(soft_hinge(y2 - (y1 - margin)))
+                else:
+                    raise ValueError("y_order.order must be 'asc' or 'desc'")
+
+            # ---- 2) X/Y 差值等式 ----
+            elif mode == 'x_diff_eq':
+                dx = float(c['value'])
+                eqs.append((x2 - x1) - dx)
+            elif mode == 'y_diff_eq':
+                dy = float(c['value'])
+                eqs.append((y2 - y1) - dy)
+
+            # ---- 3) 端点距离：等式 / 不等式 ----
+            elif mode == 'dist_eq':
+                L = float(c['value'])
+                dist = np.hypot(x2 - x1, y2 - y1)
+                eqs.append(dist - L)  # 等式
+
+            elif mode == 'dist_ge':
+                L = float(c['value'])
+                dist = np.hypot(x2 - x1, y2 - y1)
+                eqs.append(soft_hinge(L - dist))  # dist >= L
+
+            elif mode == 'dist_le':
+                L = float(c['value'])
+                dist = np.hypot(x2 - x1, y2 - y1)
+                eqs.append(soft_hinge(dist - L))  # dist <= L
+
+            # ---- 4) 方向锥：P1→P2 与目标方向 alpha 的夹角 ≤ phi ----
+            elif mode == 'dir_cone':
+                alpha = float(c.get('alpha', 0.0))  # 目标方向（弧度）
+                phi = float(c.get('phi', np.deg2rad(10)))  # 半角
+                ux, uy = np.cos(alpha), np.sin(alpha)  # 目标方向的单位向量
+
+                vx, vy = (x2 - x1), (y2 - y1)
+                vn = np.hypot(vx, vy) + 1e-12
+                cosang = (vx * ux + vy * uy) / vn  # cos(angle(P1->P2, alpha))
+                cos_bound = np.cos(phi)  # 需要 cos(angle) ≥ cos(phi)
+
+                eqs.append(soft_hinge(cos_bound - cosang))
+
             else:
-                px, py = xb, yb
-                qx, qy = xa, ya
-
-            if 'theta' in c:
-                th = float(c['theta'])
-            elif 'theta_deg' in c:
-                th = np.deg2rad(float(c['theta_deg']))
-            else:
-                raise ValueError("line_side_of_tangent needs theta or theta_deg")
-
-            side = c.get('side', 'above')  # 'above' or 'below'
-            margin = float(c.get('margin', 0.0))
-            w = float(c.get('weight', 1.0))
-
-            # 向量 w = q - p
-            wx, wy = (qx - px), (qy - py)
-
-            # 在以 θ 为 x 轴的坐标系里，w 的垂直分量：
-            # v_perp = (-sinθ, cosθ)·w
-            v_perp = (-np.sin(th)) * wx + (np.cos(th)) * wy
-
-            if side == 'above':
-                # v_perp >= margin
-                eqs.append(w * np.maximum(0.0, margin - v_perp))
-            elif side == 'below':
-                # v_perp <= -margin
-                eqs.append(w * np.maximum(0.0, v_perp + margin))
-            else:
-                raise ValueError("line_side_of_tangent.side must be 'above' or 'below'")
+                raise ValueError("arc_endpoint_relation.mode not supported")
 
     return eqs
 

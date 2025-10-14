@@ -320,8 +320,6 @@ for arc_idx in [9,10,11,12,13,14,15,16,17,18,19,20]:
     constraint_list.append({'type': 'arc_sweep_leq', 'arc': arc_idx, 'max_deg': 180.0})
 
 
-
-
 # for k in [11,12,14,16]:
 #     constraint_list.append({'type':'arc_endpoint_relation','arc':k,'mode':'x_order','order':'asc','margin':0.0})
 #
@@ -401,13 +399,14 @@ a20 = geom_objects[20];
 if np.isnan(a20.params[3]): a20.params[3] = math.radians(180.0+15.0)
 if np.isnan(a20.params[4]): a20.params[4] = math.radians(270.0)
 
-
-for idx, t1, t2 in [(11,  135,  225), (12, 150, 240), (13,45,135), (14,225,315)]:
+# 中央“上链”四段的 theta 初值（上拱）
+for idx, t1, t2 in [(11,  20,  50), (12, 50, 110), (13,110,160), (14,160,185)]:
     arc = geom_objects[idx]
     if np.isnan(arc.params[3]): arc.params[3] = math.radians(t1)
     if np.isnan(arc.params[4]): arc.params[4] = math.radians(t2)
 
-for idx, t1, t2 in [(15, 60,  150), (16, 210,  300), (17, 30,  120), (18, 0, 145)]:
+# 中央“下链”四段的 theta 初值（下拱）
+for idx, t1, t2 in [(15, -20,  10), (16, 10,  40), (17, 40,  80), (18, 80, 100)]:
     arc = geom_objects[idx]
     if np.isnan(arc.params[3]): arc.params[3] = math.radians(t1)
     if np.isnan(arc.params[4]): arc.params[4] = math.radians(t2)

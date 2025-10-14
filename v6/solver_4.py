@@ -61,6 +61,10 @@ def soft_hinge(z, k=10.0):
     # x>0 分支
     out = np.where(pos, x + np.log1p(np.exp(-x)), np.log1p(np.exp(x)))
     return out / k
+
+def softplus_stable(x):
+    # 数值稳定 softplus
+    return np.where(x>0, x + np.log1p(np.exp(-x)), np.log1p(np.exp(x)))
 def constraints(vars, geom_objects, constraint_list):
     eqs = []
     idx = 0
@@ -180,24 +184,118 @@ def constraints(vars, geom_objects, constraint_list):
 
 
 
+        # elif type_ == 'tangent_at_arc_start_to_line':
+        #     line = geom_objects[c['line']]
+        #     arc = geom_objects[c['arc']]
+        #     (x1, y1), (x2, y2) = line.points()
+        #     A, B = (y1 - y2), (x2 - x1)
+        #     # 直线方向向量（单位化可不必，叉积只需方向）
+        #     lx, ly = (x2 - x1), (y2 - y1)
+        #     t = arc.params[3]  # theta1
+        #     tx, ty = -np.sin(t), np.cos(t)  # 弧在 start 的切向
+        #     eqs.append(lx * ty - ly * tx)
+        #
+        # elif type_ == 'tangent_at_arc_end_to_line':
+        #     line = geom_objects[c['line']]
+        #     arc = geom_objects[c['arc']]
+        #     lx, ly = (line.params[2] - line.params[0]), (line.params[3] - line.params[1])
+        #     t = arc.params[4]  # theta2
+        #     tx, ty = -np.sin(t), np.cos(t)
+        #     eqs.append(lx * ty - ly * tx)
+
         elif type_ == 'tangent_at_arc_start_to_line':
+            """
+            弧在起点 t1 处与直线相切，并可选控制走向和曲率侧别
+            keys:
+              line, arc
+              same_direction: True/False/None  (同向/反向/只要求平行)
+              side: 'left'/'right'/None        (圆心在切线左/右侧)
+              margin: float=0.0                (侧别的最小有符号距离，默认0)
+            说明：
+              直线方向按 p0->p1；左侧=叉积>0。
+            """
             line = geom_objects[c['line']]
             arc = geom_objects[c['arc']]
-            (x1, y1), (x2, y2) = line.points()
-            A, B = (y1 - y2), (x2 - x1)
-            # 直线方向向量（单位化可不必，叉积只需方向）
-            lx, ly = (x2 - x1), (y2 - y1)
+
+            (x0, y0), (x1, y1) = line.points()
+            vx, vy = (x1 - x0), (y1 - y0)
+            vn = np.hypot(vx, vy) + 1e-12  # 防止除零
+
             t = arc.params[3]  # theta1
-            tx, ty = -np.sin(t), np.cos(t)  # 弧在 start 的切向
-            eqs.append(lx * ty - ly * tx)
+            tx, ty = -np.sin(t), np.cos(t)  # 弧在 t1 的单位切向
+
+            # 1) 相切（平行）：叉积=0
+            eqs.append(vx * ty - vy * tx)
+
+            # 2) 可选：同向/反向（点积→ ±|v|）
+            sd = c.get('same_direction', True)  # 默认同向更符合“走向”
+            if sd is True:
+                eqs.append((vx * tx + vy * ty) / vn - 1.0)
+            elif sd is False:
+                eqs.append((vx * tx + vy * ty) / vn + 1.0)
+
+            # 3) 可选：控制圆心在切线的左/右侧（决定弧的“鼓起”方向）
+            side = c.get('side', None)  # 'left' 或 'right'
+            margin = float(c.get('margin', 0.0))
+            if side is not None:
+                cx, cy, r = arc.params[0], arc.params[1], arc.params[2]
+                # 接触点（弧端点）
+                px = cx + r * np.cos(t)
+                py = cy + r * np.sin(t)
+                # 切线的左法向（单位）
+                nx, ny = -vy / vn, vx / vn
+                # 圆心相对接触点在法向上的有符号距离：>0 表示在“左侧”
+                s = (cx - px) * nx + (cy - py) * ny
+                if side == 'left':
+                    # 需要 s >= margin
+                    eqs.append(soft_hinge(margin - s))
+                elif side == 'right':
+                    # 需要 s <= -margin
+                    eqs.append(soft_hinge(s + margin))
+                else:
+                    raise ValueError("tangent_at_arc_start_to_line.side must be 'left' or 'right'")
 
         elif type_ == 'tangent_at_arc_end_to_line':
+            """
+            弧在终点 t2 处与直线相切，并可选控制走向和曲率侧别
+            keys 同上
+            """
             line = geom_objects[c['line']]
             arc = geom_objects[c['arc']]
-            lx, ly = (line.params[2] - line.params[0]), (line.params[3] - line.params[1])
+
+            (x0, y0), (x1, y1) = line.points()
+            vx, vy = (x1 - x0), (y1 - y0)
+            vn = np.hypot(vx, vy) + 1e-12
+
             t = arc.params[4]  # theta2
             tx, ty = -np.sin(t), np.cos(t)
-            eqs.append(lx * ty - ly * tx)
+
+            # 1) 相切（平行）
+            eqs.append(vx * ty - vy * tx)
+
+            # 2) 同/反向
+            sd = c.get('same_direction', True)
+            if sd is True:
+                eqs.append((vx * tx + vy * ty) / vn - 1.0)
+            elif sd is False:
+                eqs.append((vx * tx + vy * ty) / vn + 1.0)
+
+            # 3) 侧别（圆心在切线左/右）
+            side = c.get('side', None)
+            margin = float(c.get('margin', 0.0))
+            if side is not None:
+                cx, cy, r = arc.params[0], arc.params[1], arc.params[2]
+                px = cx + r * np.cos(t)
+                py = cy + r * np.sin(t)
+                nx, ny = -vy / vn, vx / vn
+                s = (cx - px) * nx + (cy - py) * ny
+                if side == 'left':
+                    eqs.append(soft_hinge(margin - s))
+                elif side == 'right':
+                    eqs.append(soft_hinge(s + margin))
+                else:
+                    raise ValueError("tangent_at_arc_end_to_line.side must be 'left' or 'right'")
+
 
 
 
@@ -383,7 +481,16 @@ def solve_geometry(geom_objects, constraint_list, verbose=True):
         print(f"Initial optimization params: {x0}")
 
     # Solve
-    res = least_squares(constraints, x0, args=(geom_objects, constraint_list))
+    # res = least_squares(constraints, x0, args=(geom_objects, constraint_list))
+    res = least_squares(
+        constraints, x0,
+        args=(geom_objects, constraint_list),
+        loss='linear',  # 线性损失，不做鲁棒近似
+        # loss='soft_l1',  # 尝试使用鲁棒损失函数
+        ftol=1e-12, xtol=1e-12, gtol=1e-12,
+        # max_nfev=5000,  # 允许更多迭代
+        verbose=2  # 调试期观察收敛
+    )
 
     if verbose:
         print(f"Solver result: {res.success}")
